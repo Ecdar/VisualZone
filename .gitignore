@@ -25,3 +25,4 @@ nbdist/
 *.swp
 *.DS_Store
 *.lock
+/Visualization of Zones in TLTS/nbproject/private/
