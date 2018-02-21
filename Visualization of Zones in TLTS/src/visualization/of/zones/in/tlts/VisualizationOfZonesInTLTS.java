@@ -8,8 +8,10 @@ package visualization.of.zones.in.tlts;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
@@ -23,14 +25,10 @@ import javafx.stage.Stage;
 public class VisualizationOfZonesInTLTS extends Application {
     
     @Override
-    public void start(Stage primaryStage) {
-        GridPane grid = new GridPane();
-        grid.setAlignment(Pos.CENTER);
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(25, 25, 25, 25));
+    public void start(Stage primaryStage) throws Exception {
+        Parent root = FXMLLoader.load(getClass().getResource("ZoneVisualizationFxml.fxml"));
         
-        Scene scene = new Scene(grid);
+        Scene scene = new Scene(root);
         
         primaryStage.setTitle("Zone Visualization");
         primaryStage.setScene(scene);
