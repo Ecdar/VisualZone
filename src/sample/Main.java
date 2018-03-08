@@ -23,6 +23,7 @@ import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import sample.Transforms.Tetragon;
+import sample.Transforms.WorldTransform;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +32,7 @@ public class Main extends Application {
 
     private static ObservableList<Node> dimensionUI;
     private static ObservableList<Node> zone3DUI;
-    private static Translate cameraPosition;
-    private static Rotate cameraRotation;
+    private static WorldTransform cameraTransform = new WorldTransform();
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -63,20 +63,7 @@ public class Main extends Application {
     }
 
     public static Parent setupScene() throws Exception {
-        //Create 3D scene and content
-        PerspectiveCamera camera = new PerspectiveCamera(false);
-        cameraRotation = new Rotate(0, 0, 0);
-        camera.setTranslateX(100);
-        camera.setTranslateY(-50);
-        camera.setTranslateZ(300);
-        camera.getTransforms().addAll(cameraRotation);
-
-        Group subRoot = new Group();
-        zone3DUI = subRoot.getChildren();
-
-        SubScene subScene = new SubScene(subRoot, 640, 480,
-                true, SceneAntialiasing.BALANCED);
-        subScene.setCamera(camera);
+        SubScene sub3DScene = create3DScene();
 
         //Create dimension list
         ScrollPane dimensionScrollPane = new ScrollPane();
@@ -91,9 +78,38 @@ public class Main extends Application {
         dimensionUI = dimensionRoot.getChildren();
 
         HBox parent = new HBox(10);
-        parent.getChildren().addAll(dimensionScrollPane, subScene);
+        parent.getChildren().addAll(dimensionScrollPane, sub3DScene);
 
         return new Group(parent);
+    }
+
+    public static SubScene create3DScene() {
+        //Create 3D scene and content
+        PerspectiveCamera camera = new PerspectiveCamera(false);
+        Rotate cameraRotationX = new Rotate(0, Rotate.X_AXIS);
+        Rotate cameraRotationY = new Rotate(0, Rotate.Y_AXIS);
+        Rotate cameraRotationZ = new Rotate(0, Rotate.Z_AXIS);
+        camera.getTransforms().addAll(cameraRotationX, cameraRotationY, cameraRotationZ);
+        cameraTransform.addOnRotationChange(() -> {
+            cameraRotationX.setAngle(cameraTransform.getRotationReadonly().x);
+            cameraRotationY.setAngle(cameraTransform.getRotationReadonly().y);
+            cameraRotationZ.setAngle(cameraTransform.getRotationReadonly().z);
+        });
+        cameraTransform.addOnPositionChange(() -> {
+            camera.setTranslateX(cameraTransform.getPositionReadonly().x);
+            camera.setTranslateY(cameraTransform.getPositionReadonly().y);
+            camera.setTranslateZ(cameraTransform.getPositionReadonly().z);
+        });
+        cameraTransform.setPosition(0, 0, 0);
+
+        Group subRoot = new Group();
+        zone3DUI = subRoot.getChildren();
+
+        SubScene subScene = new SubScene(subRoot, 640, 480,
+                true, SceneAntialiasing.BALANCED);
+        subScene.setCamera(camera);
+
+        return subScene;
     }
 
     public static void main(String[] args) {
@@ -103,7 +119,8 @@ public class Main extends Application {
     public static void setDimensions(List<String> dimensions) {
         dimensionUI.clear();
         for (String dimension : dimensions) {
-            dimensionUI.add(new CheckBox(dimension));
+            CheckBox checkBox = new CheckBox(dimension);
+            dimensionUI.add(checkBox);
         }
     }
 

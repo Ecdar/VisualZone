@@ -2,10 +2,6 @@ package sample.Transforms;
 
 import java.util.ArrayList;
 
-interface IAction {
-    void invoke();
-}
-
 public class Action implements IAction {
     private ArrayList<IAction> delegates = new ArrayList<>();
 
