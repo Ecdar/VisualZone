@@ -1,5 +1,7 @@
 package sample;
 
+import javafx.animation.Animation;
+import javafx.animation.RotateTransition;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -12,11 +14,15 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.Shape3D;
+import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import sample.Transforms.Tetragon;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +32,7 @@ public class Main extends Application {
     private static ObservableList<Node> dimensionUI;
     private static ObservableList<Node> zone3DUI;
     private static Translate cameraPosition;
+    private static Rotate cameraRotation;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -44,10 +51,11 @@ public class Main extends Application {
                 setDimensions(dimensionNames);
 
                 ArrayList<Shape3D> shapes = new ArrayList<>();
-                Box box = new Box(2, 2, 2);
-                box.setMaterial(new PhongMaterial(Color.RED));
-                box.getTransforms().add(new Translate(4, 4, 4));
-                shapes.add(box);
+                Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
+                rect.setMaterial(new PhongMaterial(Color.RED));
+                rect.getTransform().setPosition(250, 100, 400);
+                rect.getTransform().setScale(100, 100, 100);
+                shapes.add(rect);
                 set3DContent(shapes);
             }
         });
@@ -56,9 +64,12 @@ public class Main extends Application {
 
     public static Parent setupScene() throws Exception {
         //Create 3D scene and content
-        PerspectiveCamera camera = new PerspectiveCamera(true);
-        cameraPosition = new Translate(5, 5, -10);
-        camera.getTransforms().add(cameraPosition);
+        PerspectiveCamera camera = new PerspectiveCamera(false);
+        cameraRotation = new Rotate(0, 0, 0);
+        camera.setTranslateX(100);
+        camera.setTranslateY(-50);
+        camera.setTranslateZ(300);
+        camera.getTransforms().addAll(cameraRotation);
 
         Group subRoot = new Group();
         zone3DUI = subRoot.getChildren();
