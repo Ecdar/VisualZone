@@ -107,7 +107,7 @@ public class Main extends Application {
             camera.setTranslateY(cameraTransform.getPositionReadonly().y);
             camera.setTranslateZ(cameraTransform.getPositionReadonly().z);
         });
-        cameraTransform.setPosition(2, 0, -10);
+        cameraTransform.setPosition(0, 0, -10);
 
         Group subRoot = new Group();
         zone3DUI = subRoot.getChildren();
