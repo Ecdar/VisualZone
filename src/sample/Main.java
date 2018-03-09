@@ -1,12 +1,10 @@
 package sample;
 
-import javafx.animation.Animation;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.*;
 import javafx.scene.control.Button;
@@ -15,16 +13,14 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import sample.Transforms.Tetragon;
-import sample.Transforms.WorldTransform;
+import sample.GraphicalElements.Gizmo3D;
+import sample.GraphicalElements.Tetragon;
+import sample.GraphicalElements.WorldTransform;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +52,7 @@ public class Main extends Application {
         ArrayList<Shape3D> shapes = new ArrayList<>();
         Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
         rect.setMaterial(new PhongMaterial(Color.RED));
-        rect.getTransform().setPosition(0, 0, 0);
+        rect.getTransform().setPosition(5, -5, 0);
         rect.getTransform().setScale(1, 1, 1);
         shapes.add(rect);
         set3DContent(shapes);
@@ -107,12 +103,14 @@ public class Main extends Application {
             camera.setTranslateY(cameraTransform.getPositionReadonly().y);
             camera.setTranslateZ(cameraTransform.getPositionReadonly().z);
         });
-        cameraTransform.setPosition(0, 0, -10);
+        cameraTransform.setPosition(5, -5, -25);
 
         Group subRoot = new Group();
         zone3DUI = subRoot.getChildren();
+        Group subParent = new Group();
+        subParent.getChildren().addAll(subRoot, new Gizmo3D(0.1, 25));
 
-        SubScene subScene = new SubScene(subRoot, 640, 480,
+        SubScene subScene = new SubScene(subParent, 640, 480,
                 true, SceneAntialiasing.BALANCED);
         subScene.setCamera(camera);
 

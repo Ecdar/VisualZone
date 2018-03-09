@@ -1,9 +1,7 @@
-package sample.Transforms;
+package sample.GraphicalElements;
 
-import javafx.event.Event;
-import javafx.event.EventHandler;
-
-import java.util.function.Function;
+import sample.Utility.Action;
+import sample.Utility.IAction;
 
 public class WorldTransform {
     private Vector3 position;

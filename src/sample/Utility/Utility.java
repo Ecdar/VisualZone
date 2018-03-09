@@ -1,4 +1,4 @@
-package sample;
+package sample.Utility;
 
 public class Utility {
     public static boolean almostEqualrelative(float a, float b) {

@@ -1,11 +1,4 @@
-package sample.Transforms;
-
-import com.sun.javafx.geom.PickRay;
-import com.sun.javafx.scene.input.PickResultChooser;
-import javafx.scene.Node;
-import javafx.scene.shape.*;
-import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Translate;
+package sample.GraphicalElements;
 
 public class Tetragon extends WorldPolygon {
 

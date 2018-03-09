@@ -1,4 +1,4 @@
-package sample.Transforms;
+package sample.GraphicalElements;
 
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;

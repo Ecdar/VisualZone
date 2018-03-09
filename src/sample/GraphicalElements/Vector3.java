@@ -1,6 +1,6 @@
-package sample.Transforms;
+package sample.GraphicalElements;
 
-import sample.Utility;
+import sample.Utility.Utility;
 
 public class Vector3 {
 
