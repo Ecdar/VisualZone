@@ -2,6 +2,7 @@ package sample;
 
 import javafx.animation.Animation;
 import javafx.animation.RotateTransition;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -41,25 +42,31 @@ public class Main extends Application {
         primaryStage.show();
 
         Button testButton = new Button("Test Add");
-        testButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                ArrayList<String> dimensionNames = new ArrayList<>();
-                dimensionNames.add("cooldown");
-                dimensionNames.add("work");
-                dimensionNames.add("patience");
-                setDimensions(dimensionNames);
-
-                ArrayList<Shape3D> shapes = new ArrayList<>();
-                Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
-                rect.setMaterial(new PhongMaterial(Color.RED));
-                rect.getTransform().setPosition(250, 100, 400);
-                rect.getTransform().setScale(100, 100, 100);
-                shapes.add(rect);
-                set3DContent(shapes);
-            }
-        });
+        testButton.setOnAction(Main::testAddButtonPress);
         dimensionUI.add(testButton);
+    }
+
+    private static void testAddButtonPress(ActionEvent event) {
+        ArrayList<String> dimensionNames = new ArrayList<>();
+        dimensionNames.add("cooldown");
+        dimensionNames.add("work");
+        dimensionNames.add("patience");
+        setDimensions(dimensionNames);
+
+        ArrayList<Shape3D> shapes = new ArrayList<>();
+        Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
+        rect.setMaterial(new PhongMaterial(Color.RED));
+        rect.getTransform().setPosition(0, 0, 0);
+        rect.getTransform().setScale(1, 1, 1);
+        shapes.add(rect);
+        set3DContent(shapes);
+
+        RotateTransition anim = new RotateTransition(Duration.seconds(2), rect);
+        anim.setAxis(Rotate.Y_AXIS);
+        anim.setFromAngle(0);
+        anim.setToAngle(360);
+        anim.setCycleCount(Timeline.INDEFINITE);
+        anim.play();
     }
 
     public static Parent setupScene() throws Exception {
@@ -85,7 +92,7 @@ public class Main extends Application {
 
     public static SubScene create3DScene() {
         //Create 3D scene and content
-        PerspectiveCamera camera = new PerspectiveCamera(false);
+        PerspectiveCamera camera = new PerspectiveCamera(true);
         Rotate cameraRotationX = new Rotate(0, Rotate.X_AXIS);
         Rotate cameraRotationY = new Rotate(0, Rotate.Y_AXIS);
         Rotate cameraRotationZ = new Rotate(0, Rotate.Z_AXIS);
@@ -100,7 +107,7 @@ public class Main extends Application {
             camera.setTranslateY(cameraTransform.getPositionReadonly().y);
             camera.setTranslateZ(cameraTransform.getPositionReadonly().z);
         });
-        cameraTransform.setPosition(0, 0, 0);
+        cameraTransform.setPosition(2, 0, -10);
 
         Group subRoot = new Group();
         zone3DUI = subRoot.getChildren();
