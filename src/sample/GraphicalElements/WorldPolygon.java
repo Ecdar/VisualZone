@@ -38,7 +38,7 @@ public class WorldPolygon extends MeshView implements Object3D {
 
     private void updatePosition() {
         setTranslateX(transform.getPositionReadonly().x);
-        setTranslateY(transform.getPositionReadonly().y);
+        setTranslateY(-transform.getPositionReadonly().y);
         setTranslateZ(transform.getPositionReadonly().z);
     }
 

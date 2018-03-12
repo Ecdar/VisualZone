@@ -49,13 +49,27 @@ public class WorldTransform {
         onPositionChange.invoke();
     }
 
+    public void changePosition(Vector3 deltaPosition) {
+        this.position.minus(deltaPosition);
+        onPositionChange.invoke();
+    }
+
     public void setPosition(double x, double y, double z) {
         position.set(x, y, z);
         onPositionChange.invoke();
     }
 
+    public void changePosition(double x, double y, double z) {
+        changePosition(new Vector3(x, y, z));
+    }
+
     public void setPositionX(double x) {
         position.x = x;
+        onPositionChange.invoke();
+    }
+
+    public void changePositionX(double deltaX) {
+        position.x -= deltaX;
         onPositionChange.invoke();
     }
 
@@ -64,8 +78,18 @@ public class WorldTransform {
         onPositionChange.invoke();
     }
 
+    public void changePositionY(double deltaY) {
+        position.y -= deltaY;
+        onPositionChange.invoke();
+    }
+
     public void setPositionZ(double z) {
         position.z = z;
+        onPositionChange.invoke();
+    }
+
+    public void changePositionZ(double deltaZ) {
+        position.z -= deltaZ;
         onPositionChange.invoke();
     }
 

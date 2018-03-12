@@ -4,6 +4,7 @@ import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
+import javafx.scene.shape.DrawMode;
 
 public class Gizmo3D extends Group {
 
@@ -33,5 +34,9 @@ public class Gizmo3D extends Group {
         xAxis.setTranslateX(scale / 2);
         yAxis.setTranslateY(-scale / 2);
         zAxis.setTranslateZ(scale / 2);
+    }
+
+    public void hideThirdDimension(boolean hide) {
+        zAxis.setDisable(hide);
     }
 }

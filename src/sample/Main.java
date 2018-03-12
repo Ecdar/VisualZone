@@ -10,6 +10,8 @@ import javafx.scene.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.ScrollEvent;
+import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -18,6 +20,7 @@ import javafx.scene.shape.Shape3D;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import sample.GraphicalElements.Camera3D;
 import sample.GraphicalElements.Gizmo3D;
 import sample.GraphicalElements.Tetragon;
 import sample.GraphicalElements.WorldTransform;
@@ -30,6 +33,7 @@ public class Main extends Application {
     private static ObservableList<Node> dimensionUI;
     private static ObservableList<Node> zone3DUI;
     private static WorldTransform cameraTransform = new WorldTransform();
+    private static Gizmo3D gizmo;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -52,7 +56,7 @@ public class Main extends Application {
         ArrayList<Shape3D> shapes = new ArrayList<>();
         Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
         rect.setMaterial(new PhongMaterial(Color.RED));
-        rect.getTransform().setPosition(5, -5, 0);
+        rect.getTransform().setPosition(5, 10, 0);
         rect.getTransform().setScale(1, 1, 1);
         shapes.add(rect);
         set3DContent(shapes);
@@ -88,31 +92,23 @@ public class Main extends Application {
 
     public static SubScene create3DScene() {
         //Create 3D scene and content
-        PerspectiveCamera camera = new PerspectiveCamera(true);
-        Rotate cameraRotationX = new Rotate(0, Rotate.X_AXIS);
-        Rotate cameraRotationY = new Rotate(0, Rotate.Y_AXIS);
-        Rotate cameraRotationZ = new Rotate(0, Rotate.Z_AXIS);
-        camera.getTransforms().addAll(cameraRotationX, cameraRotationY, cameraRotationZ);
-        cameraTransform.addOnRotationChange(() -> {
-            cameraRotationX.setAngle(cameraTransform.getRotationReadonly().x);
-            cameraRotationY.setAngle(cameraTransform.getRotationReadonly().y);
-            cameraRotationZ.setAngle(cameraTransform.getRotationReadonly().z);
-        });
-        cameraTransform.addOnPositionChange(() -> {
-            camera.setTranslateX(cameraTransform.getPositionReadonly().x);
-            camera.setTranslateY(cameraTransform.getPositionReadonly().y);
-            camera.setTranslateZ(cameraTransform.getPositionReadonly().z);
-        });
-        cameraTransform.setPosition(5, -5, -25);
+        Camera3D camera = new Camera3D();
+        cameraTransform = camera.getTransform();
+        camera.getTransform().setRotation(0, 0, 0);
+        camera.getTransform().setPosition(5, 5, -25);
 
         Group subRoot = new Group();
         zone3DUI = subRoot.getChildren();
         Group subParent = new Group();
-        subParent.getChildren().addAll(subRoot, new Gizmo3D(0.1, 25));
+        gizmo = new Gizmo3D(0.1, 25);
+        subParent.getChildren().addAll(subRoot, gizmo);
 
         SubScene subScene = new SubScene(subParent, 640, 480,
                 true, SceneAntialiasing.BALANCED);
+        subScene.setFill(Color.WHITE);
         subScene.setCamera(camera);
+        subScene.addEventHandler(ScrollEvent.ANY, camera.getScrollEventHandler());
+        subScene.addEventHandler(ZoomEvent.ANY, camera.getZoomEventHandler());
 
         return subScene;
     }
