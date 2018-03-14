@@ -22,9 +22,8 @@ import ZoneVisualizer.GraphicalElements.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class Main extends Application {
+public class ZoneVisualizationApp extends Application {
 
     private static ObservableList<Node> dimensionUI;
     private static ObservableList<Node> zone3DUI;
@@ -38,7 +37,7 @@ public class Main extends Application {
         primaryStage.show();
 
         Button testButton = new Button("Test Add");
-        testButton.setOnAction(Main::testAddButtonPress);
+        testButton.setOnAction(ZoneVisualizationApp::testAddButtonPress);
         dimensionUI.add(testButton);
     }
 
@@ -146,5 +145,22 @@ public class Main extends Application {
         for (Shape3D shape : content) {
             zone3DUI.add(shape);
         }
+    }
+
+    public static void setCamera2D(Vector3 focusPoint) {
+        gizmo.showThirdDimension(false);
+        cameraTransform.setRotation(Vector3.zero());
+        cameraTransform.setPivot(focusPoint);
+        cameraTransform.setPositionX(focusPoint.x);
+        cameraTransform.setPositionY(focusPoint.y);
+        CameraContext.setIs2D(true);
+    }
+
+    public static void setCamera3D(Vector3 focusPoint) {
+        gizmo.showThirdDimension(true);
+        cameraTransform.setPivot(focusPoint);
+        cameraTransform.setPositionX(focusPoint.x);
+        cameraTransform.setPositionY(focusPoint.y);
+        CameraContext.setIs2D(false);
     }
 }

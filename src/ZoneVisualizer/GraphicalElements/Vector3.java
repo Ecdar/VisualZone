@@ -4,14 +4,14 @@ import ZoneVisualizer.Utility.Utility;
 
 public class Vector3 {
 
-    public static final Vector3 right = new Vector3(1, 0, 0),
-                                up = new Vector3(0, -1, 0),
-                                forward = new Vector3(0, 0, 1),
-                                left = new Vector3(-1, 0, 0),
-                                down = new Vector3(0, 1, 0),
-                                back = new Vector3(0, 0, -1),
-                                zero = new Vector3(0, 0, 0),
-                                one = new Vector3(1, 1, 1);
+    public static Vector3 right() { return new Vector3(1, 0, 0); }
+    public static Vector3 up() { return new Vector3(0, -1, 0); }
+    public static Vector3 forward() { return new Vector3(0, 0, 1); }
+    public static Vector3 left() { return new Vector3(-1, 0, 0); }
+    public static Vector3 down() { return new Vector3(0, 1, 0); }
+    public static Vector3 back() { return new Vector3(0, 0, -1); }
+    public static Vector3 zero() { return new Vector3(0, 0, 0); }
+    public static Vector3 one() { return new Vector3(1, 1, 1); }
 
     public double x, y, z;
 

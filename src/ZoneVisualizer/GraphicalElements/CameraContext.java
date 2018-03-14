@@ -5,6 +5,8 @@ import javafx.scene.input.ScrollEvent;
 
 public class CameraContext {
 
+    private static boolean is2D = false;
+
     private static double zoomSpeed = 0.2;
     private static double maxZoom = 25;
     private static double minZoom = -100;
@@ -62,6 +64,9 @@ public class CameraContext {
     }
 
     public void handleMouseDrag(MouseEvent event) {
+        if (is2D) {
+            return;
+        }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
             dragStartX = event.getSceneX();
             dragStartY = event.getSceneY();
@@ -111,5 +116,13 @@ public class CameraContext {
 
     public static void setPivotSpeed(double pivotSpeed) {
         CameraContext.pivotSpeed = pivotSpeed;
+    }
+
+    public static boolean is2D() {
+        return is2D;
+    }
+
+    public static void setIs2D(boolean is2D) {
+        CameraContext.is2D = is2D;
     }
 }

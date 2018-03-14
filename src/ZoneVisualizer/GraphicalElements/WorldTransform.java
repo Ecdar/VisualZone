@@ -15,10 +15,10 @@ public class WorldTransform {
     private Action onScaleChange = new Action();
 
     public WorldTransform() {
-        position = Vector3.zero;
-        pivot = Vector3.zero;
-        rotation = Vector3.zero;
-        scale = Vector3.zero;
+        position = Vector3.zero();
+        pivot = Vector3.zero();
+        rotation = Vector3.zero();
+        scale = Vector3.zero();
     }
 
     public WorldTransform(Vector3 position, Vector3 pivot, Vector3 rotation, Vector3 scale) {
