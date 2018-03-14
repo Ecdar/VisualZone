@@ -73,7 +73,7 @@ public class CameraContext {
             double deltaY = event.getSceneY() - dragStartY;
 
             fakeCameraTransform.setRotationX(startRotationX - deltaY * pivotSpeed);
-            fakeCameraTransform.setRotationY(startRotationY - deltaX * pivotSpeed);
+            fakeCameraTransform.setRotationY(startRotationY + deltaX * pivotSpeed);
         }
     }
 

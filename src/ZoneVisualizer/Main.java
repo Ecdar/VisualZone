@@ -1,5 +1,6 @@
 package ZoneVisualizer;
 
+import ZoneVisualizer.Utility.LINQ;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -21,6 +22,7 @@ import ZoneVisualizer.GraphicalElements.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main extends Application {
 
@@ -41,11 +43,13 @@ public class Main extends Application {
     }
 
     private static void testAddButtonPress(ActionEvent event) {
-        ArrayList<Clock> dimensionNames = new ArrayList<>();
-        dimensionNames.add(new Clock("cooldown", 3));
-        dimensionNames.add(new Clock("work", 5));
-        dimensionNames.add(new Clock("patience", 2));
-        setDimensions(dimensionNames);
+        ArrayList<Clock> clockDimensions = new ArrayList<>();
+        clockDimensions.add(new Clock("cooldown", 3));
+        clockDimensions.add(new Clock("work", 5));
+        clockDimensions.add(new Clock("patience", 2));
+        clockDimensions.add(new Clock("tired", 2));
+        clockDimensions.add(new Clock("angry", 2));
+        ZoneVisualization.initialize(clockDimensions, new ArrayList<>());
 
         ArrayList<Shape3D> shapes = new ArrayList<>();
         Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
@@ -57,7 +61,7 @@ public class Main extends Application {
         set3DContent(shapes);
     }
 
-    public static Parent setupScene() throws Exception {
+    private static Parent setupScene() throws Exception {
         SubScene sub3DScene = create3DScene();
 
         //Create dimension list
@@ -78,7 +82,7 @@ public class Main extends Application {
         return new Group(parent);
     }
 
-    public static SubScene create3DScene() {
+    private static SubScene create3DScene() {
         //Create 3D scene and content
         Camera3D camera = new Camera3D();
         camera.getTransform().setPosition(0, 0, -25);
@@ -112,15 +116,28 @@ public class Main extends Application {
         launch(args);
     }
 
-    public static void setDimensions(List<Clock> clocks) {
+    public static void setClockDimensions(List<Clock> clocks) {
         dimensionUI.clear();
         for (Clock clock : clocks) {
             CheckBox checkBox = new CheckBox(clock.getName() + " (" + clock.getValue() + ")");
             dimensionUI.add(checkBox);
 
             checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-
+                if (newValue) {
+                    ZoneVisualization.chooseClockDimension(clock);
+                }
+                else {
+                    ZoneVisualization.removeClockDimension(clock);
+                }
             });
+        }
+    }
+
+    public static void disableRemainingClockDimensions(boolean disable) {
+        for (CheckBox cb : LINQ.<Node, CheckBox>ofType(dimensionUI)) {
+            if (!cb.isSelected()) {
+                cb.setDisable(disable);
+            }
         }
     }
 
