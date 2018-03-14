@@ -8,17 +8,15 @@ public class TransformUpdater {
 
     protected final Node node;
     protected final WorldTransform transform;
-    protected final Rotate xRotation;
-    protected final Rotate yRotation;
-    protected final Rotate zRotation;
+    protected final Rotate xRotation = new Rotate(0, Rotate.X_AXIS);
+    protected final Rotate yRotation = new Rotate(0, Rotate.Y_AXIS);
+    protected final Rotate zRotation = new Rotate(0, Rotate.Z_AXIS);
 
-    public TransformUpdater(Node node, WorldTransform transform, Rotate xRotation, Rotate yRotation, Rotate zRotation) {
+    public TransformUpdater(Node node, WorldTransform transform) {
         this.transform = transform;
         this.node = node;
-        this.xRotation = xRotation;
-        this.yRotation = yRotation;
-        this.zRotation = zRotation;
 
+        node.getTransforms().addAll(xRotation, yRotation, zRotation);
         transform.addOnPositionChange(this::updatePosition);
         transform.addOnPivotChange(this::updatePivot);
         transform.addOnRotationChange(this::updateRotation);
