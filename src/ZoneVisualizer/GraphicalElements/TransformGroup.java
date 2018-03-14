@@ -1,26 +1,28 @@
-package sample.GraphicalElements;
+package ZoneVisualizer.GraphicalElements;
 
-import javafx.scene.shape.Sphere;
+import javafx.scene.Group;
+import javafx.scene.Node;
+import java.util.Collection;
 
-public class WorldSphere extends Sphere implements Object3D {
+public class TransformGroup extends Group implements Object3D {
 
     private final WorldTransform transform = new WorldTransform();
     private final TransformUpdater transformUpdater;
 
-    public WorldSphere() {
+    public TransformGroup() {
         super();
 
         transformUpdater = new TransformUpdater(this, transform);
     }
 
-    public WorldSphere(double radius) {
-        super(radius);
+    public TransformGroup(Node... children) {
+        super(children);
 
         transformUpdater = new TransformUpdater(this, transform);
     }
 
-    public WorldSphere(double radius, int divisions) {
-        super(radius, divisions);
+    public TransformGroup(Collection<Node> children) {
+        super(children);
 
         transformUpdater = new TransformUpdater(this, transform);
     }

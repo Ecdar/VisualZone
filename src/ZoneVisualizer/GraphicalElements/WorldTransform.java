@@ -1,7 +1,7 @@
-package sample.GraphicalElements;
+package ZoneVisualizer.GraphicalElements;
 
-import sample.Utility.Action;
-import sample.Utility.IAction;
+import ZoneVisualizer.Utility.Action;
+import ZoneVisualizer.Utility.IAction;
 
 public class WorldTransform {
     private Vector3 position;

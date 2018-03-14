@@ -1,7 +1,5 @@
-package sample;
+package ZoneVisualizer;
 
-import javafx.animation.RotateTransition;
-import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -10,19 +8,16 @@ import javafx.scene.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
-import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Shape3D;
-import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
-import javafx.util.Duration;
-import sample.GraphicalElements.*;
+import ZoneVisualizer.Constraints.Clock;
+import ZoneVisualizer.GraphicalElements.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +41,10 @@ public class Main extends Application {
     }
 
     private static void testAddButtonPress(ActionEvent event) {
-        ArrayList<String> dimensionNames = new ArrayList<>();
-        dimensionNames.add("cooldown");
-        dimensionNames.add("work");
-        dimensionNames.add("patience");
+        ArrayList<Clock> dimensionNames = new ArrayList<>();
+        dimensionNames.add(new Clock("cooldown", 3));
+        dimensionNames.add(new Clock("work", 5));
+        dimensionNames.add(new Clock("patience", 2));
         setDimensions(dimensionNames);
 
         ArrayList<Shape3D> shapes = new ArrayList<>();
@@ -117,11 +112,15 @@ public class Main extends Application {
         launch(args);
     }
 
-    public static void setDimensions(List<String> dimensions) {
+    public static void setDimensions(List<Clock> clocks) {
         dimensionUI.clear();
-        for (String dimension : dimensions) {
-            CheckBox checkBox = new CheckBox(dimension);
+        for (Clock clock : clocks) {
+            CheckBox checkBox = new CheckBox(clock.getName() + " (" + clock.getValue() + ")");
             dimensionUI.add(checkBox);
+
+            checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+
+            });
         }
     }
 

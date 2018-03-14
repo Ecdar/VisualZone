@@ -1,4 +1,4 @@
-package sample.Utility;
+package ZoneVisualizer.Utility;
 
 public class Utility {
     public static boolean almostEqualRelative(float a, float b) {

@@ -1,4 +1,4 @@
-package sample.Constraints;
+package ZoneVisualizer.Constraints;
 
 public abstract class Constraint {
 

@@ -1,6 +1,6 @@
-package sample.GraphicalElements;
+package ZoneVisualizer.GraphicalElements;
 
-import sample.Utility.Utility;
+import ZoneVisualizer.Utility.Utility;
 
 public class Vector3 {
 

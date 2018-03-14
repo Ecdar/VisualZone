@@ -1,4 +1,4 @@
-package sample.GraphicalElements;
+package ZoneVisualizer.GraphicalElements;
 
 import javafx.scene.shape.Box;
 

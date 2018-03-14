@@ -1,10 +1,9 @@
-package sample.GraphicalElements;
+package ZoneVisualizer.GraphicalElements;
 
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
-import javafx.scene.shape.DrawMode;
 
 public class Gizmo3D extends Group {
 

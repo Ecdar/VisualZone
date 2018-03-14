@@ -1,4 +1,4 @@
-package sample.Constraints;
+package ZoneVisualizer.Constraints;
 
 public class TwoClockConstraint extends Constraint {
 

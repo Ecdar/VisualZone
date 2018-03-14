@@ -1,4 +1,4 @@
-package sample.GraphicalElements;
+package ZoneVisualizer.GraphicalElements;
 
 public interface Object3D {
     WorldTransform getTransform();

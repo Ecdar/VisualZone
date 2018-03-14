@@ -1,4 +1,4 @@
-package sample;
+package ZoneVisualizer;
 
 public class Controller {
 
