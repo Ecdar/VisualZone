@@ -22,6 +22,9 @@ public class Camera3D extends PerspectiveCamera implements Object3D {
         transform.addOnPivotChange(this::updatePivot);
         transform.addOnRotationChange(this::updateRotation);
         transform.addOnScaleChange(this::updateScale);
+
+        setNearClip(0.5);
+        setFarClip(CameraContext.getMaxZoom() - CameraContext.getMinZoom());
     }
 
     private void updatePosition() {

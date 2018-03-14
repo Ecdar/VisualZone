@@ -36,7 +36,7 @@ public class Gizmo3D extends Group {
         zAxis.setTranslateZ(scale / 2);
     }
 
-    public void hideThirdDimension(boolean hide) {
-        zAxis.setDisable(hide);
+    public void showThirdDimension(boolean show) {
+        zAxis.setVisible(show);
     }
 }

@@ -10,6 +10,8 @@ import javafx.scene.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseDragEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.HBox;
@@ -101,12 +103,12 @@ public class Main extends Application {
                 true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.WHITE);
         subScene.setCamera(camera);
-        cameraTransform.setPosition(10, 5, 0);
+        cameraTransform.setPosition(5, 5, 0);
         cameraTransform.setPivot(5, 10, 0);
-        cameraTransform.setRotation(0, -90, 0);
+        cameraTransform.setRotation(0, 0, 0);
 
-//        subScene.addEventHandler(ScrollEvent.ANY, camera.getScrollEventHandler());
-//        subScene.addEventHandler(ZoomEvent.ANY, camera.getZoomEventHandler());
+        subScene.addEventHandler(ScrollEvent.ANY, cameraContext::handleScrolling);
+        subScene.addEventHandler(MouseEvent.ANY, cameraContext::handleMouseDrag);
 
         return subScene;
     }
