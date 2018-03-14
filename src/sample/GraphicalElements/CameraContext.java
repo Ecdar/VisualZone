@@ -8,7 +8,7 @@ public class CameraContext {
     private static double zoomSpeed = 0.2;
     private static double maxZoom = 25;
     private static double minZoom = -100;
-    private static double pivotSpeed = 0.7;
+    private static double pivotSpeed = 0.5;
 
     private Camera3D camera;
     private WorldTransform sceneTransform;
