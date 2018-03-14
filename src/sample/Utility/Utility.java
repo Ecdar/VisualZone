@@ -1,7 +1,7 @@
 package sample.Utility;
 
 public class Utility {
-    public static boolean almostEqualrelative(float a, float b) {
+    public static boolean almostEqualRelative(float a, float b) {
         if (a == b) {
             return true;
         }
@@ -11,7 +11,7 @@ public class Utility {
         return Math.abs(a - b) < ulp;
     }
 
-    public static boolean almostEqualrelative(double a, double b) {
+    public static boolean almostEqualRelative(double a, double b) {
         if (a == b) {
             return true;
         }

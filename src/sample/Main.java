@@ -20,10 +20,7 @@ import javafx.scene.shape.Shape3D;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import sample.GraphicalElements.Camera3D;
-import sample.GraphicalElements.Gizmo3D;
-import sample.GraphicalElements.Tetragon;
-import sample.GraphicalElements.WorldTransform;
+import sample.GraphicalElements.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,16 +54,10 @@ public class Main extends Application {
         Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
         rect.setMaterial(new PhongMaterial(Color.RED));
         rect.getTransform().setPosition(5, 10, 0);
+        rect.getTransform().setRotation(0, 0, 45);
         rect.getTransform().setScale(1, 1, 1);
         shapes.add(rect);
         set3DContent(shapes);
-
-        RotateTransition anim = new RotateTransition(Duration.seconds(2), rect);
-        anim.setAxis(Rotate.Y_AXIS);
-        anim.setFromAngle(0);
-        anim.setToAngle(360);
-        anim.setCycleCount(Timeline.INDEFINITE);
-        anim.play();
     }
 
     public static Parent setupScene() throws Exception {
@@ -93,22 +84,29 @@ public class Main extends Application {
     public static SubScene create3DScene() {
         //Create 3D scene and content
         Camera3D camera = new Camera3D();
-        cameraTransform = camera.getTransform();
-        camera.getTransform().setRotation(0, 0, 0);
-        camera.getTransform().setPosition(5, 5, -25);
+        camera.getTransform().setPosition(0, 0, -25);
 
         Group subRoot = new Group();
+        subRoot.setAutoSizeChildren(false);
         zone3DUI = subRoot.getChildren();
-        Group subParent = new Group();
+        TransformGroup subParent = new TransformGroup();
+        subParent.setAutoSizeChildren(false);
         gizmo = new Gizmo3D(0.1, 25);
         subParent.getChildren().addAll(subRoot, gizmo);
+
+        CameraContext cameraContext = new CameraContext(camera, subParent.getTransform());
+        cameraTransform = cameraContext.getFakeCameraTransform();
 
         SubScene subScene = new SubScene(subParent, 640, 480,
                 true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.WHITE);
         subScene.setCamera(camera);
-        subScene.addEventHandler(ScrollEvent.ANY, camera.getScrollEventHandler());
-        subScene.addEventHandler(ZoomEvent.ANY, camera.getZoomEventHandler());
+        cameraTransform.setPosition(10, 5, 0);
+        cameraTransform.setPivot(5, 10, 0);
+        cameraTransform.setRotation(0, -90, 0);
+
+//        subScene.addEventHandler(ScrollEvent.ANY, camera.getScrollEventHandler());
+//        subScene.addEventHandler(ZoomEvent.ANY, camera.getZoomEventHandler());
 
         return subScene;
     }

@@ -67,9 +67,9 @@ public class Vector3 {
             return false;
         }
         Vector3 other = (Vector3)obj;
-        if (Utility.almostEqualrelative(x, other.x) &&
-            Utility.almostEqualrelative(y, other.y) &&
-            Utility.almostEqualrelative(z, other.z)) {
+        if (Utility.almostEqualRelative(x, other.x) &&
+            Utility.almostEqualRelative(y, other.y) &&
+            Utility.almostEqualRelative(z, other.z)) {
             return true;
         }
 
