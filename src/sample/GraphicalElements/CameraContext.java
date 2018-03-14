@@ -5,13 +5,17 @@ import javafx.scene.input.ScrollEvent;
 
 public class CameraContext {
 
+    private static double zoomSpeed = 0.2;
+    private static double maxZoom = 25;
+    private static double minZoom = -100;
+    private static double pivotSpeed = 0.7;
+
     private Camera3D camera;
     private WorldTransform sceneTransform;
     private WorldTransform fakeCameraTransform;
 
-    private static double zoomSpeed = 0.2;
-    private static double maxZoom = 25;
-    private static double minZoom = -100;
+    private double dragStartX, dragStartY;
+    private double startRotationX, startRotationY;
 
     public CameraContext(Camera3D camera, WorldTransform sceneTransform) {
         this.camera = camera;
@@ -58,7 +62,19 @@ public class CameraContext {
     }
 
     public void handleMouseDrag(MouseEvent event) {
+        if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
+            dragStartX = event.getSceneX();
+            dragStartY = event.getSceneY();
+            startRotationX = fakeCameraTransform.getRotationReadonly().x;
+            startRotationY = fakeCameraTransform.getRotationReadonly().y;
+        }
+        else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
+            double deltaX = event.getSceneX() - dragStartX;
+            double deltaY = event.getSceneY() - dragStartY;
 
+            fakeCameraTransform.setRotationX(startRotationX - deltaY * pivotSpeed);
+            fakeCameraTransform.setRotationY(startRotationY - deltaX * pivotSpeed);
+        }
     }
 
     public WorldTransform getFakeCameraTransform() {
@@ -87,5 +103,13 @@ public class CameraContext {
 
     public static void setMinZoom(double minZoom) {
         CameraContext.minZoom = minZoom;
+    }
+
+    public static double getPivotSpeed() {
+        return pivotSpeed;
+    }
+
+    public static void setPivotSpeed(double pivotSpeed) {
+        CameraContext.pivotSpeed = pivotSpeed;
     }
 }

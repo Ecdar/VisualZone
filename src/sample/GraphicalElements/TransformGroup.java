@@ -42,22 +42,21 @@ public class TransformGroup extends Group implements Object3D {
 
     private void updatePosition() {
         Vector3 position = transform.getPositionReadonly();
-        double x = position.x, y = -position.y, z = position.z;
-        setTranslateX(x);
-        setTranslateY(y);
-        setTranslateZ(z);
+        setTranslateX(position.x);
+        setTranslateY(-position.y);
+        setTranslateZ(position.z);
     }
 
     private void updatePivot() {
         Vector3 pivot = transform.getPivotReadonly();
         xRotation.setPivotX(pivot.x);
-        xRotation.setPivotY(pivot.y);
+        xRotation.setPivotY(-pivot.y);
         xRotation.setPivotZ(pivot.z);
         yRotation.setPivotX(pivot.x);
-        yRotation.setPivotY(pivot.y);
+        yRotation.setPivotY(-pivot.y);
         yRotation.setPivotZ(pivot.z);
         zRotation.setPivotX(pivot.x);
-        zRotation.setPivotY(pivot.y);
+        zRotation.setPivotY(-pivot.y);
         zRotation.setPivotZ(pivot.z);
     }
 

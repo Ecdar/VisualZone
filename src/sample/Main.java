@@ -55,7 +55,7 @@ public class Main extends Application {
         ArrayList<Shape3D> shapes = new ArrayList<>();
         Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
         rect.setMaterial(new PhongMaterial(Color.RED));
-        rect.getTransform().setPosition(5, 10, 0);
+        rect.getTransform().setPosition(5, 5, 5);
         rect.getTransform().setRotation(0, 0, 45);
         rect.getTransform().setScale(1, 1, 1);
         shapes.add(rect);
@@ -104,7 +104,7 @@ public class Main extends Application {
         subScene.setFill(Color.WHITE);
         subScene.setCamera(camera);
         cameraTransform.setPosition(5, 5, 0);
-        cameraTransform.setPivot(5, 10, 0);
+        cameraTransform.setPivot(5, 5, 5);
         cameraTransform.setRotation(0, 0, 0);
 
         subScene.addEventHandler(ScrollEvent.ANY, cameraContext::handleScrolling);
