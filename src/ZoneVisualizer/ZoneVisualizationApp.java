@@ -1,5 +1,8 @@
 package ZoneVisualizer;
 
+import ZoneVisualizer.Constraints.Constraint;
+import ZoneVisualizer.Constraints.Inequality;
+import ZoneVisualizer.Constraints.SingleClockConstraint;
 import ZoneVisualizer.Utility.LINQ;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
@@ -21,6 +24,7 @@ import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.GraphicalElements.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ZoneVisualizationApp extends Application {
@@ -43,12 +47,20 @@ public class ZoneVisualizationApp extends Application {
 
     private static void testAddButtonPress(ActionEvent event) {
         ArrayList<Clock> clockDimensions = new ArrayList<>();
-        clockDimensions.add(new Clock("cooldown", 3));
-        clockDimensions.add(new Clock("work", 5));
-        clockDimensions.add(new Clock("patience", 2));
-        clockDimensions.add(new Clock("tired", 2));
-        clockDimensions.add(new Clock("angry", 2));
-        ZoneVisualization.initialize(clockDimensions, new ArrayList<>());
+        clockDimensions.add(new Clock("cooldown"));
+        clockDimensions.add(new Clock("work"));
+        clockDimensions.add(new Clock("patience"));
+        clockDimensions.add(new Clock("tired"));
+        clockDimensions.add(new Clock("angry"));
+        List<Constraint> constraints = Arrays.asList(
+                new SingleClockConstraint(Inequality.GreaterThan, 2, clockDimensions.get(0)),
+                new SingleClockConstraint(Inequality.SmallerThanEqual, 4, clockDimensions.get(0)),
+                new SingleClockConstraint(Inequality.GreaterThan, 4, clockDimensions.get(1)),
+                new SingleClockConstraint(Inequality.SmallerThan, 7, clockDimensions.get(1)),
+                new SingleClockConstraint(Inequality.GreaterThan, 2, clockDimensions.get(2)),
+                new SingleClockConstraint(Inequality.SmallerThanEqual, 4, clockDimensions.get(2))
+        );
+        ZoneVisualization.initialize(clockDimensions, constraints);
 
         ArrayList<Shape3D> shapes = new ArrayList<>();
         Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
@@ -101,8 +113,7 @@ public class ZoneVisualizationApp extends Application {
                 true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.WHITE);
         subScene.setCamera(camera);
-        cameraTransform.setPosition(5, 5, 0);
-        cameraTransform.setPivot(5, 5, 5);
+        cameraTransform.setPositionZ(0);
         cameraTransform.setRotation(0, 0, 0);
 
         subScene.addEventHandler(ScrollEvent.ANY, cameraContext::handleScrolling);
@@ -117,9 +128,18 @@ public class ZoneVisualizationApp extends Application {
 
     public static void setClockDimensions(List<Clock> clocks) {
         dimensionUI.clear();
+        int i = 0;
         for (Clock clock : clocks) {
-            CheckBox checkBox = new CheckBox(clock.getName() + " (" + clock.getValue() + ")");
+            CheckBox checkBox = new CheckBox(clock.getName());
             dimensionUI.add(checkBox);
+
+            if (i < 3) {
+                i++;
+                checkBox.setSelected(true);
+            }
+            else {
+                checkBox.setDisable(true);
+            }
 
             checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue) {

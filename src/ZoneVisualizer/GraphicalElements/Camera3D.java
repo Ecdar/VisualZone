@@ -12,8 +12,9 @@ public class Camera3D extends PerspectiveCamera implements Object3D {
 
         transformUpdater = new TransformUpdater(this, transform);
 
+        double camZoomDistance = CameraContext.getMaxZoom() - CameraContext.getMinZoom();
         setNearClip(0.5);
-        setFarClip(CameraContext.getMaxZoom() - CameraContext.getMinZoom());
+        setFarClip(2 * camZoomDistance);
     }
 
     @Override

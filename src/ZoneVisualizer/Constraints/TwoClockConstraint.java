@@ -11,22 +11,6 @@ public class TwoClockConstraint extends Constraint {
         this.clock2 = clock2;
     }
 
-    @Override
-    public boolean holds() {
-        switch (inequality) {
-            case GreaterThan:
-                return clock1.value - clock2.value > getnValue();
-            case SmallerThan:
-                return clock1.value - clock2.value < getnValue();
-            case GreaterThanEqual:
-                return clock1.value - clock2.value >= getnValue();
-            case SmallerThanEqual:
-                return clock1.value - clock2.value <= getnValue();
-            default:
-                return false;
-        }
-    }
-
     public Clock getClock1() {
         return clock1;
     }

@@ -9,22 +9,6 @@ public class SingleClockConstraint extends Constraint {
         this.clock = clock;
     }
 
-    @Override
-    public boolean holds() {
-        switch (inequality) {
-            case GreaterThan:
-                return clock.value > getnValue();
-            case SmallerThan:
-                return clock.value < getnValue();
-            case GreaterThanEqual:
-                return clock.value >= getnValue();
-            case SmallerThanEqual:
-                return clock.value <= getnValue();
-            default:
-                return false;
-        }
-    }
-
     public Clock getClock() {
         return clock;
     }

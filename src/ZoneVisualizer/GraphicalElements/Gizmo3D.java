@@ -1,9 +1,11 @@
 package ZoneVisualizer.GraphicalElements;
 
+import javafx.geometry.VPos;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
+import javafx.scene.text.*;
 
 public class Gizmo3D extends Group {
 
@@ -17,7 +19,7 @@ public class Gizmo3D extends Group {
         yAxis = new Box(thickness,thickness,thickness);
         zAxis = new Box(thickness,thickness,thickness);
 
-        this.getChildren().addAll(xAxis, yAxis, zAxis);
+        this.getChildren().addAll(xAxis, yAxis, zAxis );
         xAxis.setMaterial(new PhongMaterial(Color.RED));
         yAxis.setMaterial(new PhongMaterial(Color.GREEN));
         zAxis.setMaterial(new PhongMaterial(Color.BLUE));

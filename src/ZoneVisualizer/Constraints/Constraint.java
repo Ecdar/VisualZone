@@ -10,8 +10,6 @@ public abstract class Constraint {
         this.nValue = nValue;
     }
 
-    public abstract boolean holds();
-
     public Inequality getInequality() {
         return inequality;
     }
