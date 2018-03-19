@@ -3,10 +3,7 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.Utility.LINQ;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Zone {
@@ -16,77 +13,86 @@ public class Zone {
 
     public Zone(Collection<Constraint> constraints, Collection<Clock> clocks) {
         ArrayList<double[]> verts = new ArrayList<>();
-        Map<Clock, Double> minBounds = clocks.stream().collect(Collectors.toMap(c -> c, c -> 0d));
-        Map<Clock, Boolean> minBoundsInclusive = clocks.stream().collect(Collectors.toMap(c -> c, c -> true));
-        Map<Clock, Double> maxBounds = clocks.stream().collect(Collectors.toMap(c -> c, c -> Double.POSITIVE_INFINITY));
-        Map<Clock, Boolean> maxBoundsInclusive = clocks.stream().collect(Collectors.toMap(c -> c, c -> true));
 
-        calculateBoxZone(LINQ.ofType(constraints), minBounds, minBoundsInclusive, maxBounds, maxBoundsInclusive);
-
-        checkForEmptyZone(clocks, minBounds, minBoundsInclusive, maxBounds, maxBoundsInclusive);
-
-        cutZoneCorners(LINQ.ofType(constraints), minBounds, minBoundsInclusive, maxBounds, maxBoundsInclusive);
+        reduceConstraints(constraints);
 
         vertices = verts.toArray(vertices);
     }
 
-    //Calculates the zone using only the single dimensional constraints.
-    //In other words the zone without taking "tilted" planes into account
-    private void calculateBoxZone(Collection<SingleClockConstraint> constraints,
-                                  Map<Clock, Double> minBounds, Map<Clock, Boolean> minBoundsInclusive,
-                                  Map<Clock, Double> maxBounds, Map<Clock, Boolean> maxBoundsInclusive) {
-        for (SingleClockConstraint constraint : constraints) {
-            Inequality inequality = constraint.getInequality();
-            double nValue = constraint.getnValue();
-            Clock clock = constraint.getClock();
-            if (inequality == Inequality.SmallerThan
-                    || inequality == Inequality.SmallerThanEqual) {
-                Double clockMax = maxBounds.get(clock);
-                if (nValue < clockMax) {
-                    maxBounds.put(clock, nValue);
+    //Removes any (trivial) redundant constraints and also checks for (trivial) emptiness
+    //Returns true if this zone is empty
+    private boolean reduceConstraints(Collection<Constraint> constraints) {
+        Map<Clock, List<SingleClockConstraint>> singleClockConstraints =
+                LINQ.<Constraint, SingleClockConstraint>ofType(constraints).stream()
+                        .collect(Collectors.groupingBy((SingleClockConstraint c) -> c.getClock()));
 
-                    maxBoundsInclusive.put(clock, inequality == Inequality.SmallerThanEqual);
-                }
-                else if (nValue == clockMax
-                        && inequality == Inequality.SmallerThanEqual) {
-                    maxBoundsInclusive.put(clock, true);
-                }
+        for (Map.Entry<Clock, List<SingleClockConstraint>> constraintsOfClock : singleClockConstraints.entrySet()) {
+            List<SingleClockConstraint> sortedConstraints = constraintsOfClock.getValue().stream()
+                    .sorted(this::singleClockConstraintComparator)
+                    .collect(Collectors.toList());
+            SingleClockConstraint max = sortedConstraints.get(0);
+            SingleClockConstraint min = sortedConstraints.get(sortedConstraints.size() - 1);
+
+            if (min.getnValue() > max.getnValue()
+                    || (min.getnValue() == max.getnValue()
+                        && (!(min.getInequality() == Inequality.GreaterThanEqual)
+                            || !(max.getInequality() == Inequality.SmallerThanEqual)))) {
+                return true;
             }
-            else if (inequality == Inequality.GreaterThan
-                    || inequality == Inequality.GreaterThanEqual) {
-                Double clockMin = minBounds.get(clock);
-                if (nValue > clockMin) {
-                    minBounds.put(clock, nValue);
 
-                    minBoundsInclusive.put(clock, inequality == Inequality.GreaterThanEqual);
-                }
-                else if (nValue == clockMin
-                        && inequality == Inequality.GreaterThanEqual) {
-                    minBoundsInclusive.put(clock, true);
-                }
+            sortedConstraints.remove(max);
+            sortedConstraints.remove(min);
+            for (SingleClockConstraint c : sortedConstraints) {
+                constraints.remove(c);
             }
         }
+
+        //todo handle two clock constraints
+
+        return false;
     }
 
-    //Checks if the zone is empty (could again some performance by doing this check earlier)
-    private void checkForEmptyZone(Collection<Clock> clocks,
-                                   Map<Clock, Double> minBounds, Map<Clock, Boolean> minBoundsInclusive,
-                                   Map<Clock, Double> maxBounds, Map<Clock, Boolean> maxBoundsInclusive) {
-        for (Clock clock : clocks) {
-            if (minBounds.get(clock) > maxBounds.get(clock)
-                    || (minBounds.get(clock) == maxBounds.get(clock)
-                    && (!minBoundsInclusive.get(clock) || !maxBoundsInclusive.get(clock)))) {
-                //Empty zone
-                minBounds.clear();
-                maxBounds.clear();
+    //Sorts constraints so max bounds are first, and min bounds last
+    //Some trickery as max bounds are smallest values first and min bounds are largest values first
+    private int singleClockConstraintComparator(SingleClockConstraint c1, SingleClockConstraint c2) {
+        int ret = Double.compare(c1.getnValue(), c2.getnValue());
+        if (c1.getInequality() == Inequality.GreaterThan
+                || c1.getInequality() == Inequality.GreaterThanEqual) {
+            if (c2.getInequality() == Inequality.GreaterThan
+                    || c2.getInequality() == Inequality.GreaterThanEqual) {
+                if (ret != 0) {
+                    return -ret;
+                }
+                if (c1.getInequality() == c2.getInequality()) {
+                    return 0;
+                }
+                if (c1.getInequality() == Inequality.GreaterThan) {
+                    return -1;
+                }
+                return 1;
+            }
+            else {
+                return -1;
             }
         }
-    }
-
-    private void cutZoneCorners(Collection<TwoClockConstraint> constraints,
-                                Map<Clock, Double> minBounds, Map<Clock, Boolean> minBoundsInclusive,
-                                Map<Clock, Double> maxBounds, Map<Clock, Boolean> maxBoundsInclusive) {
-
+        else {
+            if (c2.getInequality() == Inequality.SmallerThan
+                    || c2.getInequality() == Inequality.SmallerThanEqual) {
+                if (ret != 0) {
+                    return -ret;
+                }
+                if (c1.getInequality() == c2.getInequality()) {
+                    return 0;
+                }
+                if (c1.getInequality() == Inequality.SmallerThan) {
+                    return 1;
+                }
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        }
     }
 
     private class Face {
