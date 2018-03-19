@@ -31,17 +31,27 @@ public class Zone {
                     .sorted(this::singleClockConstraintComparator)
                     .collect(Collectors.toList());
             SingleClockConstraint max = sortedConstraints.get(0);
+            if (max.getInequality() != Inequality.SmallerThan && max.getInequality() != Inequality.SmallerThanEqual) {
+                max = null;
+            }
             SingleClockConstraint min = sortedConstraints.get(sortedConstraints.size() - 1);
+            if (min.getInequality() != Inequality.GreaterThan && min.getInequality() != Inequality.GreaterThanEqual) {
+                min = null;
+            }
 
-            if (min.getnValue() > max.getnValue()
+            if (min != null && max != null && min.getnValue() > max.getnValue()
                     || (min.getnValue() == max.getnValue()
                         && (!(min.getInequality() == Inequality.GreaterThanEqual)
                             || !(max.getInequality() == Inequality.SmallerThanEqual)))) {
                 return true;
             }
 
-            sortedConstraints.remove(max);
-            sortedConstraints.remove(min);
+            if (max != null) {
+                sortedConstraints.remove(max);
+            }
+            if (min != null) {
+                sortedConstraints.remove(min);
+            }
             for (SingleClockConstraint c : sortedConstraints) {
                 constraints.remove(c);
             }
