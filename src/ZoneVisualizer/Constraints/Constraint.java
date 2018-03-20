@@ -14,6 +14,21 @@ public abstract class Constraint {
         return inequality;
     }
 
+    public int getInequalityAsInt() {
+        switch (inequality) {
+            case GreaterThan:
+                return 0;
+            case GreaterThanEqual:
+                return 1;
+            case SmallerThanEqual:
+                return 2;
+            case SmallerThan:
+                return 3;
+                default:
+                    return -1;
+        }
+    }
+
     public double getnValue() {
         return nValue;
     }

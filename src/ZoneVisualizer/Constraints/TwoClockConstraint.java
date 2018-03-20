@@ -18,4 +18,23 @@ public class TwoClockConstraint extends Constraint {
     public Clock getClock2() {
         return clock2;
     }
+
+    public TwoClockConstraint getInvertedConstraint() {
+        Inequality invertedInequality = inequality;
+        switch (inequality) {
+            case SmallerThan:
+                invertedInequality = Inequality.GreaterThan;
+                break;
+            case SmallerThanEqual:
+                invertedInequality = Inequality.GreaterThanEqual;
+                break;
+            case GreaterThan:
+                invertedInequality = Inequality.SmallerThan;
+                break;
+            case GreaterThanEqual:
+                invertedInequality = Inequality.SmallerThanEqual;
+                break;
+        }
+        return new TwoClockConstraint(invertedInequality, -nValue, clock2, clock1);
+    }
 }
