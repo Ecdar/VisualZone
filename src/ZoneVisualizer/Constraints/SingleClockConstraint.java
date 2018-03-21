@@ -4,8 +4,8 @@ public class SingleClockConstraint extends Constraint {
 
     protected Clock clock;
 
-    public SingleClockConstraint(Inequality inequality, double nValue, Clock clock) {
-        super(inequality, nValue);
+    public SingleClockConstraint(Inequality inequality, boolean inclusive, double nValue, Clock clock) {
+        super(inequality, inclusive, nValue);
         this.clock = clock;
     }
 

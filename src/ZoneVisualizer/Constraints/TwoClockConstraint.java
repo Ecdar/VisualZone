@@ -5,8 +5,8 @@ public class TwoClockConstraint extends Constraint {
     protected Clock clock1;
     protected Clock clock2;
 
-    public TwoClockConstraint(Inequality inequality, double nValue, Clock clock1, Clock clock2) {
-        super(inequality, nValue);
+    public TwoClockConstraint(Inequality inequality, boolean inclusive, double nValue, Clock clock1, Clock clock2) {
+        super(inequality, inclusive, nValue);
         this.clock1 = clock1;
         this.clock2 = clock2;
     }
@@ -22,19 +22,13 @@ public class TwoClockConstraint extends Constraint {
     public TwoClockConstraint getInvertedConstraint() {
         Inequality invertedInequality = inequality;
         switch (inequality) {
-            case SmallerThan:
+            case LessThan:
                 invertedInequality = Inequality.GreaterThan;
                 break;
-            case SmallerThanEqual:
-                invertedInequality = Inequality.GreaterThanEqual;
-                break;
             case GreaterThan:
-                invertedInequality = Inequality.SmallerThan;
-                break;
-            case GreaterThanEqual:
-                invertedInequality = Inequality.SmallerThanEqual;
+                invertedInequality = Inequality.LessThan;
                 break;
         }
-        return new TwoClockConstraint(invertedInequality, -nValue, clock2, clock1);
+        return new TwoClockConstraint(invertedInequality, inclusive, -nValue, clock2, clock1);
     }
 }

@@ -56,7 +56,7 @@ public class ZoneVisualizationApp extends Application {
                 new SingleClockConstraint(Inequality.GreaterThan, 2, clockDimensions.get(0)),
                 new SingleClockConstraint(Inequality.SmallerThanEqual, 4, clockDimensions.get(0)),
                 new SingleClockConstraint(Inequality.GreaterThan, 4, clockDimensions.get(1)),
-                new SingleClockConstraint(Inequality.SmallerThan, 7, clockDimensions.get(1)),
+                new SingleClockConstraint(Inequality.LessThan, 7, clockDimensions.get(1)),
                 new SingleClockConstraint(Inequality.GreaterThan, 2, clockDimensions.get(2)),
                 new SingleClockConstraint(Inequality.SmallerThanEqual, 4, clockDimensions.get(2))
         );

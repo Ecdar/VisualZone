@@ -1,146 +1,151 @@
 package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.*;
-import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ConstraintReducer {
 
-    private Map<Clock, SingleClockConstraint> maxBoundSingleClockConstraints = new HashMap<>();
-    private Map<Clock, SingleClockConstraint> minBoundSingleClockConstraints = new HashMap<>();
+    private Map<Clock, SingleClockConstraint> minBoundConstraints = new HashMap<>();
+    private Map<Clock, SingleClockConstraint> maxBoundConstraints = new HashMap<>();
     private Map<Clock, TwoClockConstraint> twoClockConstraints = new HashMap<>();
+    private boolean restrictedToEmptiness = false;
 
     public ConstraintReducer(Collection<Constraint> constraints) {
-        reduceConstraints(constraints);
+        for (Constraint constraint : constraints) {
+            if (constraint instanceof SingleClockConstraint) {
+                if (addSingleClockConstraint((SingleClockConstraint)constraint)) return;
+            }
+            else if (constraint instanceof TwoClockConstraint) {
+                if (addTwoClockConstraint((TwoClockConstraint)constraint)) return;
+            }
+        }
+
+        Collection<TwoClockConstraint> tempTCConstraints = new ArrayList<>(twoClockConstraints.values());
+        for (TwoClockConstraint tcConstraint : tempTCConstraints) {
+            //Remember all of these can be null!
+            SingleClockConstraint
+                    xMin = minBoundConstraints.get(tcConstraint.getClock1()),
+                    xMax = maxBoundConstraints.get(tcConstraint.getClock1()),
+                    yMin = minBoundConstraints.get(tcConstraint.getClock2()),
+                    yMax = maxBoundConstraints.get(tcConstraint.getClock2());
+            boolean inclusive = xMin.isInclusive() && yMax.isInclusive() && tcConstraint.isInclusive();
+            double boundingValue = xMin.getnValue() - yMax.getnValue();
+            if (boundingValue > tcConstraint.getnValue() ||
+                    (boundingValue == tcConstraint.getnValue() && !inclusive)) {
+                //Empty case
+                restrictedToEmptiness = true;
+                return;
+            }
+            inclusive = xMax.isInclusive() && yMin.isInclusive();
+            boundingValue = xMax.getnValue() - yMin.getnValue();
+            if (boundingValue < tcConstraint.getnValue() ||
+                    (boundingValue == tcConstraint.getnValue() && (!inclusive || tcConstraint.isInclusive()))) {
+                //Redundant case
+                twoClockConstraints.remove(tcConstraint.getClock1());
+                continue;
+            }
+            boolean nGreaterThanMaxMax, nLessThanMinMin;
+            //Todo check for case 2, 3, 4 and 6
+        }
+        //Todo check for emptiness between two clock constraints and single clock constraints
+        //Todo remove single clock constraints that are redundant because of two clock constraints and vice versa
     }
 
-    //Removes any (trivial) redundant constraints and also checks for (trivial) emptiness
-    //Returns true if this zone is empty
-    private boolean reduceConstraints(Collection<Constraint> constraints) {
-        if (reduceSingleClockConstraints(constraints)) return true;
-
-        List<TwoClockConstraint> twoClockConstraints =
-                new ArrayList<>(LINQ.<Constraint, TwoClockConstraint>ofType(constraints));
+    private boolean addTwoClockConstraint(TwoClockConstraint tcConstraint) {
         //Invert greater than constraints
-        for (TwoClockConstraint c : twoClockConstraints) {
-            if (c.getInequalityAsInt() > 1) {
-                constraints.remove(c);
-                twoClockConstraints.remove(c);
-                TwoClockConstraint inverted = c.getInvertedConstraint();
-                constraints.add(inverted);
-                twoClockConstraints.add(inverted);
-            }
+        if (tcConstraint.getInequality() == Inequality.GreaterThan) {
+            tcConstraint = tcConstraint.getInvertedConstraint();
         }
-        Map<Clock, List<TwoClockConstraint>> clockToTwoClockConstraintsMap =
-                twoClockConstraints.stream().collect(Collectors.groupingBy(TwoClockConstraint::getClock1));
-
-        for (Map.Entry<Clock, List<TwoClockConstraint>> constraintsOfClock : clockToTwoClockConstraintsMap.entrySet()) {
-            List<TwoClockConstraint> constraintsToRemove = new ArrayList<>(constraintsOfClock.getValue());
-            TwoClockConstraint max = constraintsToRemove.stream().min((c1, c2) -> {
-                int ret = Double.compare(c1.getnValue(), c2.getnValue());
-                if (ret != 0) {
-                    return ret;
-                }
-                if (c1.getInequality() == c2.getInequality()) {
-                    return 0;
-                }
-                if (c1.getInequality() == Inequality.SmallerThan) {
-                    return -1;
-                }
-                return 1;
-            }).get();
-            constraintsToRemove.remove(max);
-            for (TwoClockConstraint c : constraintsToRemove) {
-                constraintsOfClock.getValue().remove(c);
-                constraints.remove(c);
-            }
+        if (checkEmptiness(tcConstraint, twoClockConstraints.get(tcConstraint.getClock2()))) {
+            restrictedToEmptiness = true;
+            return true;
         }
-        //todo check for emptiness
-
-        //todo compare two clock constraints to single clock constraints
-
+        tryAddTwoClockBound(tcConstraint);
         return false;
     }
 
-    private boolean reduceSingleClockConstraints(Collection<Constraint> constraints) {
-        List<SingleClockConstraint> singleClockConstraints =
-                new ArrayList<>(LINQ.<Constraint, SingleClockConstraint>ofType(constraints));
-        Map<Clock, List<SingleClockConstraint>> clockToConstraintsMap =
-                singleClockConstraints.stream()
-                        .collect(Collectors.groupingBy(SingleClockConstraint::getClock));
-
-        for (Map.Entry<Clock, List<SingleClockConstraint>> constraintsOfClock : clockToConstraintsMap.entrySet()) {
-            List<SingleClockConstraint> sortedConstraints = constraintsOfClock.getValue().stream()
-                    .sorted(this::singleClockConstraintComparator)
-                    .collect(Collectors.toList());
-            SingleClockConstraint max = sortedConstraints.get(0);
-            if (max.getInequalityAsInt() < 2) {
-                max = null;
-            }
-            SingleClockConstraint min = sortedConstraints.get(sortedConstraints.size() - 1);
-            if (min.getInequalityAsInt() > 1) {
-                min = null;
-            }
-
-            if (min != null && max != null
-                    && (min.getnValue() > max.getnValue()
-                    || (min.getnValue() == max.getnValue()
-                    && (!(min.getInequality() == Inequality.GreaterThanEqual)
-                    || !(max.getInequality() == Inequality.SmallerThanEqual))))) {
+    private boolean addSingleClockConstraint(SingleClockConstraint constraint) {
+        if (constraint.getInequality() == Inequality.GreaterThan) {
+            if (checkEmptiness(constraint, maxBoundConstraints.get(constraint.getClock()))) {
+                restrictedToEmptiness = true;
                 return true;
             }
-
-            if (max != null) {
-                sortedConstraints.remove(max);
+            tryAddMinBound(constraint);
+        }
+        else {
+            if (checkEmptiness(minBoundConstraints.get(constraint.getClock()), constraint)) {
+                restrictedToEmptiness = true;
+                return true;
             }
-            if (min != null) {
-                sortedConstraints.remove(min);
-            }
-            constraints.removeAll(sortedConstraints);
+            tryAddMaxBound(constraint);
         }
         return false;
     }
 
-    //Sorts constraints so max bounds are first, and min bounds last
-    //Some trickery as max bounds are smallest values first and min bounds are largest values first
-    private int singleClockConstraintComparator(SingleClockConstraint c1, SingleClockConstraint c2) {
-        int ret = Double.compare(c1.getnValue(), c2.getnValue());
-        if (c1.getInequalityAsInt() < 2) {
-            if (c2.getInequalityAsInt() < 2) {
-                if (ret != 0) {
-                    return -ret;
-                }
-                if (c1.getInequality() == c2.getInequality()) {
-                    return 0;
-                }
-                if (c1.getInequality() == Inequality.GreaterThan) {
-                    return -1;
-                }
-                return 1;
-            }
-            else {
-                return -1;
-            }
-        }
-        else {
-            if (c2.getInequalityAsInt() > 1) {
-                if (ret != 0) {
-                    return -ret;
-                }
-                if (c1.getInequality() == c2.getInequality()) {
-                    return 0;
-                }
-                if (c1.getInequality() == Inequality.SmallerThan) {
-                    return 1;
-                }
-                return -1;
-            }
-            else {
-                return 1;
-            }
+    //Adds the given constraint to list of minimum bounds if there isn't one or if it is higher than the old bound
+    private void tryAddMinBound(SingleClockConstraint constraint) {
+        SingleClockConstraint old = minBoundConstraints.get(constraint.getClock());
+        if (old == null || constraint.getnValue() > old.getnValue() ||
+                (constraint.getnValue() == old.getnValue() && !constraint.isInclusive())) {
+            minBoundConstraints.put(constraint.getClock(), constraint);
         }
     }
 
+    //Adds the given constraint to list of maximum bounds if there isn't one or if it is lower than the old bound
+    private void tryAddMaxBound(SingleClockConstraint constraint) {
+        SingleClockConstraint old = maxBoundConstraints.get(constraint.getClock());
+        if (old == null || constraint.getnValue() < old.getnValue() ||
+                (constraint.getnValue() == old.getnValue() && !constraint.isInclusive())) {
+            maxBoundConstraints.put(constraint.getClock(), constraint);
+        }
+    }
+
+    //Adds the given constraint to list of two clock bounds if there isn't one or
+    //if it is more restrictive than the old bound
+    private void tryAddTwoClockBound(TwoClockConstraint constraint) {
+        TwoClockConstraint old = twoClockConstraints.get(constraint.getClock1());
+        if (old == null || constraint.getnValue() < old.getnValue() ||
+                (constraint.getnValue() == old.getnValue() && !constraint.isInclusive())) {
+            twoClockConstraints.put(constraint.getClock1(), constraint);
+        }
+    }
+
+    //Returns true if the given constraints (on the same clock) restrict us to the empty space
+    private boolean checkEmptiness(SingleClockConstraint min, SingleClockConstraint max) {
+        if (min == null || max == null) {
+            return false;
+        }
+        if (min.getnValue() < max.getnValue()) {
+            return false;
+        }
+        if (min.getnValue() > max.getnValue()) {
+            return true;
+        }
+        if (!min.isInclusive() || !max.isInclusive()) {
+            return true;
+        }
+        return false;
+    }
+
+    //Returns true if the given constraints with the same 2 clocks restricts us to the empty space
+    private boolean checkEmptiness(TwoClockConstraint c1, TwoClockConstraint c2) {
+        if (c1 == null || c2 == null) {
+            return false;
+        }
+        if (c1.getnValue() > -c2.getnValue()) {
+            return false;
+        }
+        if (c1.getnValue() < -c2.getnValue()) {
+            return true;
+        }
+        if (!c1.isInclusive() || !c2.isInclusive()) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isRestrictedToEmptiness() {
+        return restrictedToEmptiness;
+    }
 }
