@@ -3,6 +3,7 @@ package ZoneVisualizer;
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
+import ZoneVisualizer.Zones.ConstraintZone;
 import ZoneVisualizer.Zones.Zone;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ public class ZoneVisualization {
     private static ArrayList<Constraint> constraints = new ArrayList<>();
 
     private static ArrayList<Clock> currentClockDimensions = new ArrayList<>();
-    private static Zone zone;
+    private static ConstraintZone zone;
 
     public static void initialize(List<Clock> clockList, List<Constraint> constraintList) {
         clocks.clear();
@@ -23,7 +24,7 @@ public class ZoneVisualization {
         clocks.addAll(clockList);
         constraints.addAll(constraintList);
 
-        zone = new Zone(constraints, clocks);
+        zone = new ConstraintZone(constraints);
 
         ZoneVisualizationApp.setClockDimensions(clocks);
         if (clocks.size() > 2) {
