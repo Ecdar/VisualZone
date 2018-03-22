@@ -15,7 +15,7 @@ public class ZoneVisualization {
     private static ArrayList<Constraint> constraints = new ArrayList<>();
 
     private static ArrayList<Clock> currentClockDimensions = new ArrayList<>();
-    private static ConstraintZone zone;
+    private static Zone zone;
 
     public static void initialize(List<Clock> clockList, List<Constraint> constraintList) {
         clocks.clear();
@@ -24,7 +24,7 @@ public class ZoneVisualization {
         clocks.addAll(clockList);
         constraints.addAll(constraintList);
 
-        zone = new ConstraintZone(constraints);
+        zone = new Zone(constraintList, clockList);
 
         ZoneVisualizationApp.setClockDimensions(clocks);
         if (clocks.size() > 2) {

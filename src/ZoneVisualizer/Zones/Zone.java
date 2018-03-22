@@ -16,7 +16,7 @@ public class Zone {
             faces = new Face[0];
             return;
         }
-
+        
     }
 
     protected class Face {
