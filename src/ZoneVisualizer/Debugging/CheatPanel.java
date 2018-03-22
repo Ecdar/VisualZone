@@ -48,6 +48,7 @@ public class CheatPanel extends GridPane {
         );
         constraintCheckBoxes = constraints.stream().map(c -> new CheckBox(c.toString())).collect(Collectors.toList());
         constraintCheckBoxes.forEach(cb -> cb.setSelected(true));
+
         this.getChildren().addAll(constraintCheckBoxes);
         this.getChildren().addAll(testButton);
         for (int i = 0; i < constraintCheckBoxes.size(); i++) {
@@ -66,13 +67,13 @@ public class CheatPanel extends GridPane {
 
         ZoneVisualization.initialize(clockDimensions, chosenConstraints);
 
-        ArrayList<Shape3D> shapes = new ArrayList<>();
-        Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
-        rect.setMaterial(new PhongMaterial(Color.RED));
-        rect.getTransform().setPosition(5, 5, 5);
-        rect.getTransform().setRotation(0, 0, 45);
-        rect.getTransform().setScale(1, 1, 1);
-        shapes.add(rect);
-        ZoneVisualizationApp.set3DContent(shapes);
+//        ArrayList<Shape3D> shapes = new ArrayList<>();
+//        Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
+//        rect.setMaterial(new PhongMaterial(Color.RED));
+//        rect.getTransform().setPosition(5, 5, 5);
+//        rect.getTransform().setRotation(0, 0, 45);
+//        rect.getTransform().setScale(1, 1, 1);
+//        shapes.add(rect);
+//        ZoneVisualizationApp.set3DContent(shapes);
     }
 }
