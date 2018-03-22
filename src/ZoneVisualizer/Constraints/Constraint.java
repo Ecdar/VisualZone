@@ -23,4 +23,21 @@ public abstract class Constraint {
     public boolean isInclusive() {
         return inclusive;
     }
+
+    @Override
+    public String toString() {
+        String result = "";
+        if (inequality == Inequality.GreaterThan) {
+            result += ">";
+        }
+        else if (inequality == Inequality.LessThan) {
+            result += "<";
+        }
+        if (inclusive) {
+            result += "=";
+        }
+        result += " " + nValue;
+
+        return result;
+    }
 }

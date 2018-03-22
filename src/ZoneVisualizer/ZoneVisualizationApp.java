@@ -3,6 +3,7 @@ package ZoneVisualizer;
 import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.Constraints.Inequality;
 import ZoneVisualizer.Constraints.SingleClockConstraint;
+import ZoneVisualizer.Debugging.CheatPanel;
 import ZoneVisualizer.Utility.LINQ;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
@@ -39,37 +40,6 @@ public class ZoneVisualizationApp extends Application {
         primaryStage.setTitle("Zone Visualization");
         primaryStage.setScene(new Scene(setupScene()));
         primaryStage.show();
-
-        Button testButton = new Button("Test Add");
-        testButton.setOnAction(ZoneVisualizationApp::testAddButtonPress);
-        dimensionUI.add(testButton);
-    }
-
-    private static void testAddButtonPress(ActionEvent event) {
-        ArrayList<Clock> clockDimensions = new ArrayList<>();
-        clockDimensions.add(new Clock("cooldown"));
-        clockDimensions.add(new Clock("work"));
-        clockDimensions.add(new Clock("patience"));
-        clockDimensions.add(new Clock("tired"));
-        clockDimensions.add(new Clock("angry"));
-        List<Constraint> constraints = Arrays.asList(
-                new SingleClockConstraint(Inequality.GreaterThan, 2, clockDimensions.get(0)),
-                new SingleClockConstraint(Inequality.SmallerThanEqual, 4, clockDimensions.get(0)),
-                new SingleClockConstraint(Inequality.GreaterThan, 4, clockDimensions.get(1)),
-                new SingleClockConstraint(Inequality.LessThan, 7, clockDimensions.get(1)),
-                new SingleClockConstraint(Inequality.GreaterThan, 2, clockDimensions.get(2)),
-                new SingleClockConstraint(Inequality.SmallerThanEqual, 4, clockDimensions.get(2))
-        );
-        ZoneVisualization.initialize(clockDimensions, constraints);
-
-        ArrayList<Shape3D> shapes = new ArrayList<>();
-        Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
-        rect.setMaterial(new PhongMaterial(Color.RED));
-        rect.getTransform().setPosition(5, 5, 5);
-        rect.getTransform().setRotation(0, 0, 45);
-        rect.getTransform().setScale(1, 1, 1);
-        shapes.add(rect);
-        set3DContent(shapes);
     }
 
     private static Parent setupScene() throws Exception {
@@ -87,8 +57,14 @@ public class ZoneVisualizationApp extends Application {
         dimensionScrollPane.setContent(dimensionRoot);
         dimensionUI = dimensionRoot.getChildren();
 
+        //Debugging
+        dimensionRoot.setPrefHeight(300);
+        VBox leftBarParent = new VBox(5);
+        leftBarParent.getChildren().addAll(dimensionScrollPane, new CheatPanel());
+        //Debugging end
+
         HBox parent = new HBox(10);
-        parent.getChildren().addAll(dimensionScrollPane, sub3DScene);
+        parent.getChildren().addAll(leftBarParent, sub3DScene);
 
         return new Group(parent);
     }

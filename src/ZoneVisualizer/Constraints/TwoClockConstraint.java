@@ -31,4 +31,9 @@ public class TwoClockConstraint extends Constraint {
         }
         return new TwoClockConstraint(invertedInequality, inclusive, -nValue, clock2, clock1);
     }
+
+    @Override
+    public String toString() {
+        return clock1.getName() + " - " + clock2.getName() + " " + super.toString();
+    }
 }

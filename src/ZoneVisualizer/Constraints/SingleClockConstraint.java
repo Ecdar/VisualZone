@@ -12,4 +12,9 @@ public class SingleClockConstraint extends Constraint {
     public Clock getClock() {
         return clock;
     }
+
+    @Override
+    public String toString() {
+        return clock.getName() + " " + super.toString();
+    }
 }
