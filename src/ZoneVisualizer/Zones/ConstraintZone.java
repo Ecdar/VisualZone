@@ -202,4 +202,28 @@ public class ConstraintZone {
     public boolean isRestrictedToEmptiness() {
         return restrictedToEmptiness;
     }
+
+    public SingleClockConstraint getMinConstraint(Clock key) {
+        return minBoundConstraints.get(key);
+    }
+
+    public SingleClockConstraint getMaxConstraint(Clock key) {
+        return maxBoundConstraints.get(key);
+    }
+
+    public TwoClockConstraint getTCConstraint(Clock key) {
+        return twoClockConstraints.get(key);
+    }
+
+    public Collection<SingleClockConstraint> getMinConstraints() {
+        return minBoundConstraints.values();
+    }
+
+    public Collection<SingleClockConstraint> getMaxConstraints() {
+        return maxBoundConstraints.values();
+    }
+
+    public Collection<TwoClockConstraint> getTCConstraints() {
+        return twoClockConstraints.values();
+    }
 }

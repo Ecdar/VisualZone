@@ -5,6 +5,7 @@ import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.Zones.ConstraintZone;
 import ZoneVisualizer.Zones.Zone;
+import javafx.scene.shape.Shape3D;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,10 +63,12 @@ public class ZoneVisualization {
 
     private static void twoClocksSetup() {
         ZoneVisualizationApp.setCamera2D(new Vector3(5, 5, 0));
+        ZoneVisualizationApp.set3DContent(zone.projectTo2DMesh());
     }
 
     private static void threeClocksSetup() {
         ZoneVisualizationApp.disableRemainingClockDimensions(true);
         ZoneVisualizationApp.setCamera3D(new Vector3(5, 5, 5));
+        ZoneVisualizationApp.set3DContent(zone.projectTo3DMesh());
     }
 }

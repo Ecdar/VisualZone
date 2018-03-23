@@ -1,6 +1,11 @@
 package ZoneVisualizer.GraphicalElements;
 
+import ZoneVisualizer.Utility.LINQ;
 import javafx.scene.shape.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class WorldPolygon extends MeshView implements Object3D {
 
@@ -23,6 +28,27 @@ public class WorldPolygon extends MeshView implements Object3D {
         triangleMesh.getPoints().addAll(vertices);
         triangleMesh.getTexCoords().addAll(texCoords);
         triangleMesh.getFaces().addAll(faces);
+        setMesh(triangleMesh);
+        setDrawMode(DrawMode.FILL);
+        setCullFace(CullFace.NONE);
+
+        transformUpdater = new TransformUpdater(this, transform);
+    }
+
+    public WorldPolygon(float[] vertices) {
+        float texCoords[] = new float[1];
+        List<Integer> faces = new ArrayList<>();
+
+        //Todo implement ear clipping algorithm to find faces
+
+        TriangleMesh triangleMesh = new TriangleMesh();
+        triangleMesh.getPoints().addAll(vertices);
+        triangleMesh.getTexCoords().addAll(texCoords);
+        int[] facesArray = new int[faces.size() * 2];
+        for (int i = 0; i < faces.size(); i++) {
+            facesArray[i * 2] = faces.get(i);
+        }
+        triangleMesh.getFaces().addAll(facesArray);
         setMesh(triangleMesh);
         setDrawMode(DrawMode.FILL);
         setCullFace(CullFace.NONE);

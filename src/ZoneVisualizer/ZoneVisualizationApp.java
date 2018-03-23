@@ -136,7 +136,11 @@ public class ZoneVisualizationApp extends Application {
         }
     }
 
-    public static void set3DContent(List<Shape3D> content) {
+    public static void set3DContent(Shape3D... content) {
+        set3DContent(Arrays.asList(content));
+    }
+
+    public static void set3DContent(List<? extends Shape3D> content) {
         zone3DUI.clear();
         for (Shape3D shape : content) {
             zone3DUI.add(shape);
