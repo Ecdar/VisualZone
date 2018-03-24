@@ -2,55 +2,105 @@ package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
+import ZoneVisualizer.Utility.BackedUpValue;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 public class Zone {
 
-    protected double[][] vertices;
+    protected List<Map<Clock, Double>> vertices;
     protected Map<Constraint, Face> faces;
 
     public Zone(Collection<Constraint> constraints, Collection<Clock> clocks) {
         ConstraintZone constraintZone = new ConstraintZone(constraints);
-        if (constraintZone.isRestrictedToEmptiness()) {
-            vertices = new double[0][];
-            faces = new HashMap<>();
-            return;
-        }
-        //Todo find points where constraints cross each other
+        vertices = new ArrayList<>();
         faces = new HashMap<>();
-        List<SingleClockConstraint> tempMinBounds = new ArrayList<>(constraintZone.getMinConstraints());
-        List<SingleClockConstraint> tempMaxBounds = new ArrayList<>(constraintZone.getMaxConstraints());
-        List<TwoClockConstraint> tempTCConstraints = new ArrayList<>(constraintZone.getTCConstraints());
-
-        for (SingleClockConstraint scC : tempMinBounds) {
-            for (SingleClockConstraint scC2 : tempMaxBounds) {
-
-            }
+        if (constraintZone.isRestrictedToEmptiness()) {
+            return;
         }
 
         List<Clock> tempClocks = new ArrayList<>(clocks);
-        findVerticesForClocks(tempClocks, constraintZone);
+        Map<Clock, BackedUpValue<Constraint, Double>> chosenConstraints = new HashMap<>();
+        findVerticesForClocks(chosenConstraints, tempClocks, constraintZone);
     }
 
-    private void findVerticesForClocks(List<Clock> remainingClocks, ConstraintZone constraintZone) {
-        if (remainingClocks.size() > 0) {
+    private void findVerticesForClocks(Map<Clock, BackedUpValue<Constraint, Double>> chosenConstraints,
+                                       List<Clock> remainingClocks, ConstraintZone constraintZone) {
+        if (remainingClocks.isEmpty()) {
+            addVertex(chosenConstraints);
+            return;
+        }
+        Clock clock = remainingClocks.get(0);
+        remainingClocks.remove(clock);
+        chosenConstraints.put(clock,
+                new BackedUpValue<>(constraintZone.getMinConstraint(clock), Double.valueOf(0)));
+        findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
 
+        chosenConstraints.put(clock,
+                new BackedUpValue<>(constraintZone.getMaxConstraint(clock), Double.POSITIVE_INFINITY));
+        findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
+        remainingClocks.add(clock);
+    }
+
+    private void addVertex(Map<Clock, BackedUpValue<Constraint, Double>> constraintMap) {
+        Map<Clock, Double> vertex = new HashMap<>();
+        for (Map.Entry<Clock, BackedUpValue<Constraint, Double>> constraintEntry : constraintMap.entrySet()){
+            if (constraintEntry.getValue().isNull()) {
+                vertex.put(constraintEntry.getKey(), constraintEntry.getValue().getBackupValue());
+            }
+            else {
+                vertex.put(constraintEntry.getKey(), constraintEntry.getValue().getValue().getnValue());
+            }
+        }
+        vertices.add(vertex);
+        int index = vertices.size() - 1;
+        for (BackedUpValue<Constraint, Double> constraint : constraintMap.values()) {
+            if (!constraint.isNull()) {
+                addVertexToFace(index, constraint.getValue());
+            }
         }
     }
 
-    public WorldPolygon projectTo2DMesh() {
-        double[][] projectedVertices = new double[vertices.length][3];
-        //Todo project vertices to 2D (and find order? for polygon line)
-        for (Map.Entry<Constraint, Face> face : faces.entrySet()) {
-
+    private void addVertexToFace(int vertexIndex, Constraint constraint) {
+        if (!faces.containsKey(constraint)) {
+            faces.put(constraint, new Face());
         }
-        float[] polygonVertices = new float[6];
+        faces.get(constraint).addVertexIndex(vertexIndex);
+    }
+
+    public WorldPolygon projectTo2DMesh(Clock dimension1, Clock dimension2) {
+        double[][] projectedVertices = new double[vertices.size()][3];
+
+        for (int i = 0; i < vertices.size(); i++) {
+            Map<Clock, Double> vertex = vertices.get(i);
+            projectedVertices[i][0] = vertex.get(dimension1);
+            projectedVertices[i][1] = vertex.get(dimension2);
+        }
+        Double minX = Arrays.asList(projectedVertices).stream()
+                .map(doubles -> doubles[0]).min(Double::compare).get();
+        Double maxX = Arrays.asList(projectedVertices).stream()
+                .map(doubles -> doubles[0]).max(Double::compare).get();
+        Double minY = Arrays.asList(projectedVertices).stream()
+                .map(doubles -> doubles[1]).min(Double::compare).get();
+        Double maxY = Arrays.asList(projectedVertices).stream()
+                .map(doubles -> doubles[1]).max(Double::compare).get();
+
+        List<Double> vertList = Arrays.asList(projectedVertices).stream()
+                .filter(v -> v[0] == minX || v[0] == maxX || v[1] == minY || v[1] == maxY)
+                .flatMap(v -> Arrays.stream(v).boxed())
+                .collect(Collectors.toList());
+
+        float[] polygonVertices = new float[vertList.size()];
+        for (int i = 0; i < vertList.size(); i++) {
+            polygonVertices[i] = (float)vertList.get(i).doubleValue();
+        }
 
         return new WorldPolygon(polygonVertices);
     }
 
-    public List<WorldPolygon> projectTo3DMesh() {
+    public List<WorldPolygon> projectTo3DMesh(Clock dimension1, Clock dimension2, Clock dimension3) {
         List<WorldPolygon> projectedPolygons = new ArrayList<>();
         //Todo project to 3D space
 
@@ -58,10 +108,14 @@ public class Zone {
     }
 
     protected class Face {
-        private int[] verticeIndexes;
+        private List<Integer> verticeIndices = new ArrayList<>();
 
-        public int[] getVerticeIndexes() {
-            return verticeIndexes;
+        public List<Integer> getVerticeIndices() {
+            return verticeIndices;
+        }
+
+        public void addVertexIndex(Integer index) {
+            verticeIndices.add(index);
         }
     }
 }

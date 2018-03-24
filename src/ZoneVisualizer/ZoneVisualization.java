@@ -63,12 +63,14 @@ public class ZoneVisualization {
 
     private static void twoClocksSetup() {
         ZoneVisualizationApp.setCamera2D(new Vector3(5, 5, 0));
-        ZoneVisualizationApp.set3DContent(zone.projectTo2DMesh());
+        ZoneVisualizationApp.set3DContent(
+                zone.projectTo2DMesh(currentClockDimensions.get(0), currentClockDimensions.get(1)));
     }
 
     private static void threeClocksSetup() {
         ZoneVisualizationApp.disableRemainingClockDimensions(true);
         ZoneVisualizationApp.setCamera3D(new Vector3(5, 5, 5));
-        ZoneVisualizationApp.set3DContent(zone.projectTo3DMesh());
+        ZoneVisualizationApp.set3DContent(zone.projectTo3DMesh(
+                currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2)));
     }
 }
