@@ -4,8 +4,10 @@ import ZoneVisualizer.Utility.LINQ;
 import javafx.scene.shape.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class WorldPolygon extends MeshView implements Object3D {
 
@@ -25,6 +27,7 @@ public class WorldPolygon extends MeshView implements Object3D {
         }
 
         TriangleMesh triangleMesh = new TriangleMesh();
+        triangleMesh.setVertexFormat(VertexFormat.POINT_TEXCOORD);
         triangleMesh.getPoints().addAll(vertices);
         triangleMesh.getTexCoords().addAll(texCoords);
         triangleMesh.getFaces().addAll(faces);
@@ -36,19 +39,22 @@ public class WorldPolygon extends MeshView implements Object3D {
     }
 
     public WorldPolygon(float[] vertices) {
-        float texCoords[] = new float[1];
-        List<Integer> faces = new ArrayList<>();
+        float texCoords[] = new float[2];
+        List<Integer> faceIndices = new ArrayList<>();
 
-        //Todo implement ear clipping algorithm to find faces
+        Vector3 center = new Vector3();
+        center.x = IntStream.range(0, vertices.length).boxed()
+                .collect(Collectors.averagingDouble((Integer i) -> vertices[i]));
 
         TriangleMesh triangleMesh = new TriangleMesh();
+        triangleMesh.setVertexFormat(VertexFormat.POINT_TEXCOORD);
         triangleMesh.getPoints().addAll(vertices);
         triangleMesh.getTexCoords().addAll(texCoords);
-        int[] facesArray = new int[faces.size() * 2];
-        for (int i = 0; i < faces.size(); i++) {
-            facesArray[i * 2] = faces.get(i);
+        int[] faceArray = new int[faceIndices.size() * 2];
+        for (int i = 0; i < faceIndices.size(); i++) {
+            faceArray[i * 2] = faceIndices.get(i);
         }
-        triangleMesh.getFaces().addAll(facesArray);
+        triangleMesh.getFaces().addAll(faceArray);
         setMesh(triangleMesh);
         setDrawMode(DrawMode.FILL);
         setCullFace(CullFace.NONE);
