@@ -58,6 +58,19 @@ public class Vector3 {
         return new Vector3(x / dividend, y / dividend, z / dividend);
     }
 
+    public double dot(Vector3 other) {
+        return this.x * other.x + this.y * other.y + this.z * other.z;
+    }
+
+    public Vector3 crossProduct(Vector3 v) {
+        double uvi, uvj, uvk;
+        uvi = this.y * v.z - v.y * this.z;
+        uvj = v.x * this.z - this.x * v.z;
+        uvk = this.x * v.y - v.x * this.y;
+
+        return new Vector3(uvi, uvj, uvk);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if(super.equals(obj)) {

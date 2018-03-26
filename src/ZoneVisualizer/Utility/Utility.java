@@ -1,5 +1,7 @@
 package ZoneVisualizer.Utility;
 
+import ZoneVisualizer.GraphicalElements.Vector3;
+
 public class Utility {
     public static boolean almostEqualRelative(float a, float b) {
         if (a == b) {

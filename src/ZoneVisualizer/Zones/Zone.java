@@ -1,6 +1,7 @@
 package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.*;
+import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import ZoneVisualizer.Utility.BackedUpValue;
 
@@ -97,7 +98,7 @@ public class Zone {
             polygonVertices[i] = (float)vertList.get(i).doubleValue();
         }
 
-        return new WorldPolygon(polygonVertices);
+        return new WorldPolygon(polygonVertices, Vector3.back());
     }
 
     public List<WorldPolygon> projectTo3DMesh(Clock dimension1, Clock dimension2, Clock dimension3) {
