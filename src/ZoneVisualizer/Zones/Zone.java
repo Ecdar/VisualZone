@@ -23,11 +23,11 @@ public class Zone {
         }
 
         List<Clock> tempClocks = new ArrayList<>(clocks);
-        Map<Clock, BackedUpValue<Constraint, Double>> chosenConstraints = new HashMap<>();
+        Map<Clock, Constraint> chosenConstraints = new HashMap<>();
         findVerticesForClocks(chosenConstraints, tempClocks, constraintZone);
     }
 
-    private void findVerticesForClocks(Map<Clock, BackedUpValue<Constraint, Double>> chosenConstraints,
+    private void findVerticesForClocks(Map<Clock, Constraint> chosenConstraints,
                                        List<Clock> remainingClocks, ConstraintZone constraintZone) {
         if (remainingClocks.isEmpty()) {
             addVertex(chosenConstraints);
@@ -35,32 +35,33 @@ public class Zone {
         }
         Clock clock = remainingClocks.get(0);
         remainingClocks.remove(clock);
-        chosenConstraints.put(clock,
-                new BackedUpValue<>(constraintZone.getMinConstraint(clock), Double.valueOf(0)));
+        Constraint chosenConstraint = constraintZone.getMinConstraint(clock);
+        if (chosenConstraint == null) {
+            chosenConstraint = new SingleClockConstraint
+                    (Inequality.GreaterThan, false, 0, clock);
+        }
+        chosenConstraints.put(clock, chosenConstraint);
         findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
 
-        chosenConstraints.put(clock,
-                new BackedUpValue<>(constraintZone.getMaxConstraint(clock), Double.POSITIVE_INFINITY));
+        chosenConstraint = constraintZone.getMaxConstraint(clock);
+        if (chosenConstraint == null) {
+            chosenConstraint = new SingleClockConstraint
+                    (Inequality.LessThan, false, Double.POSITIVE_INFINITY, clock);
+        }
+        chosenConstraints.put(clock, chosenConstraint);
         findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
         remainingClocks.add(clock);
     }
 
-    private void addVertex(Map<Clock, BackedUpValue<Constraint, Double>> constraintMap) {
+    private void addVertex(Map<Clock, Constraint> constraintMap) {
         Map<Clock, Double> vertex = new HashMap<>();
-        for (Map.Entry<Clock, BackedUpValue<Constraint, Double>> constraintEntry : constraintMap.entrySet()){
-            if (constraintEntry.getValue().isNull()) {
-                vertex.put(constraintEntry.getKey(), constraintEntry.getValue().getBackupValue());
-            }
-            else {
-                vertex.put(constraintEntry.getKey(), constraintEntry.getValue().getValue().getnValue());
-            }
+        for (Map.Entry<Clock, Constraint> constraintEntry : constraintMap.entrySet()){
+            vertex.put(constraintEntry.getKey(), constraintEntry.getValue().getnValue());
         }
         vertices.add(vertex);
         int index = vertices.size() - 1;
-        for (BackedUpValue<Constraint, Double> constraint : constraintMap.values()) {
-            if (!constraint.isNull()) {
-                addVertexToFace(index, constraint.getValue());
-            }
+        for (Constraint constraint : constraintMap.values()) {
+            addVertexToFace(index, constraint);
         }
     }
 

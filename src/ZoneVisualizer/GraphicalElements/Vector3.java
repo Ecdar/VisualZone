@@ -71,6 +71,11 @@ public class Vector3 {
         return new Vector3(uvi, uvj, uvk);
     }
 
+    public double max() {
+        double maximum = x > y ? x : y;
+        return maximum < z ? z : maximum;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if(super.equals(obj)) {

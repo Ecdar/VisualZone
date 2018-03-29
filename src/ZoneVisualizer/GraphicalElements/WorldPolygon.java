@@ -54,26 +54,31 @@ public class WorldPolygon extends MeshView implements Object3D {
             return;
         }
 
+        double maxValue = vertices.stream().map(v -> v.max()).filter(Double::isFinite).max(Double::compareTo).get();
         Vector3 center = new Vector3();
-        center.x = vertices.stream().collect(Collectors.averagingDouble(v -> v.x));
-        center.y = vertices.stream().collect(Collectors.averagingDouble(v -> v.y));
-        center.z = vertices.stream().collect(Collectors.averagingDouble(v -> v.z));
+        center.x = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.x) ? v.x : maxValue * 2 + 50));
+        center.y = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.y) ? v.y : maxValue * 2 + 50));
+        center.z = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.z) ? v.z : maxValue * 2 + 50));
         transform.setPosition(center);
 
         vertices.sort(new PointSortByAngleIn3D(center, normal, vertices.get(0)));
 
         float[] localSpaceVertices = new float[vertices.size() * 3];
         for (int i = 0; i < vertices.size(); i++) {
-            localSpaceVertices[i * 3] = (float)(vertices.get(i).x - center.x);
-            localSpaceVertices[i * 3 + 1] = (float)(vertices.get(i).y - center.y);
-            localSpaceVertices[i * 3 + 2] = (float)(vertices.get(i).z - center.z);
+            Vector3 vertex = vertices.get(i);
+            localSpaceVertices[i * 3] = Double.isFinite(vertex.x) ?
+                    (float)(vertex.x - center.x) : (float)maxValue * 10 + 100;
+            localSpaceVertices[i * 3 + 1] = Double.isFinite(vertex.y) ?
+                    (float)(vertex.y - center.y) : (float)maxValue * 10 + 100;
+            localSpaceVertices[i * 3 + 2] = Double.isFinite(vertex.z) ?
+                    (float)(vertex.z - center.z) : (float)maxValue * 10 + 100;
         }
 
         int[] faceArray = new int[(vertices.size() - 2) * 6];
         for (int i = 0; i < vertices.size() - 2; i++) {
-            faceArray[i * 6] = i + 2;
+            faceArray[i * 6] = 0;
             faceArray[i * 6 + 2] = i + 1;
-            faceArray[i * 6 + 4] = 0;
+            faceArray[i * 6 + 4] = i + 2;
         }
 
         createTriangleMesh(localSpaceVertices, new float[2], faceArray);
