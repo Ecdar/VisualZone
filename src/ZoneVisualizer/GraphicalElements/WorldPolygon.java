@@ -3,10 +3,13 @@ package ZoneVisualizer.GraphicalElements;
 import ZoneVisualizer.Utility.LINQ;
 import ZoneVisualizer.Utility.PointSortByAngleIn3D;
 import ZoneVisualizer.Utility.Utility;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -25,14 +28,14 @@ public class WorldPolygon extends MeshView implements Object3D {
         else if (texCoords.length % 2 != 0) {
             throw new RuntimeException("Received " + texCoords.length + " tex coordinates. Must be divisible by 2");
         }
-        else if (faces.length % 3 != 0) {
+        else if (faces.length % 6 != 0) {
             throw new RuntimeException("Received " + faces.length + " face indices. Must be divisible by 3");
         }
         transformUpdater = new TransformUpdater(this, transform);
         if (faces.length > 0) {
-            Vector3 p1 = new Vector3(vertices[faces[0]], vertices[faces[2]], vertices[faces[4]]),
-                    p2 = new Vector3(vertices[faces[6]], vertices[faces[8]], vertices[faces[10]]),
-                    p3 = new Vector3(vertices[faces[12]], vertices[faces[14]], vertices[faces[16]]);
+            Vector3 p1 = new Vector3(vertices[faces[0]], vertices[faces[0] + 1], vertices[faces[0] + 2]),
+                    p2 = new Vector3(vertices[faces[2]], vertices[faces[2] + 1], vertices[faces[2] + 2]),
+                    p3 = new Vector3(vertices[faces[4]], vertices[faces[4] + 1], vertices[faces[4] + 2]);
             this.normal = p1.minus(p2).crossProduct(p3.minus(p2));
         }
         else {
@@ -40,40 +43,42 @@ public class WorldPolygon extends MeshView implements Object3D {
         }
 
         createTriangleMesh(vertices, texCoords, faces);
+
+        setMaterial(new PhongMaterial(Color.RED));
     }
 
-    public WorldPolygon(float[] vertices, Vector3 normal) {
+    public WorldPolygon(List<Vector3> vertices, Vector3 normal) {
         transformUpdater = new TransformUpdater(this, transform);
         this.normal = normal;
-        if (vertices.length == 0) {
+        if (vertices.size() == 0) {
             return;
         }
 
         Vector3 center = new Vector3();
-        center.x = IntStream.range(0, vertices.length / 3).boxed()
-                .collect(Collectors.averagingDouble((Integer i) -> vertices[i * 3]));
-        center.y = IntStream.range(0, vertices.length / 3).boxed()
-                .collect(Collectors.averagingDouble((Integer i) -> vertices[i * 3 + 1]));
-        center.z = IntStream.range(0, vertices.length / 3).boxed()
-                .collect(Collectors.averagingDouble((Integer i) -> vertices[i * 3 + 2]));
+        center.x = vertices.stream().collect(Collectors.averagingDouble(v -> v.x));
+        center.y = vertices.stream().collect(Collectors.averagingDouble(v -> v.y));
+        center.z = vertices.stream().collect(Collectors.averagingDouble(v -> v.z));
         transform.setPosition(center);
 
-        List<Vector3> vectorVertices = new ArrayList<>();
-        for (int i = 0; i < vertices.length; i += 3) {
-            vectorVertices.add(new Vector3(vertices[i], vertices[i + 1], vertices[i + 2]));
-        }
-        vectorVertices.sort(new PointSortByAngleIn3D(center, normal, vectorVertices.get(0)));
+        vertices.sort(new PointSortByAngleIn3D(center, normal, vertices.get(0)));
 
-        float[] localSpaceVertices = new float[vertices.length];
-        for (int i = 0; i < vectorVertices.size(); i++) {
-            localSpaceVertices[i * 3] = (float)(vectorVertices.get(i).x - center.x);
-            localSpaceVertices[i * 3 + 1] = (float)(vectorVertices.get(i).y - center.y);
-            localSpaceVertices[i * 3 + 2] = (float)(vectorVertices.get(i).z - center.z);
+        float[] localSpaceVertices = new float[vertices.size() * 3];
+        for (int i = 0; i < vertices.size(); i++) {
+            localSpaceVertices[i * 3] = (float)(vertices.get(i).x - center.x);
+            localSpaceVertices[i * 3 + 1] = (float)(vertices.get(i).y - center.y);
+            localSpaceVertices[i * 3 + 2] = (float)(vertices.get(i).z - center.z);
         }
 
-        int[] faceArray = new int[localSpaceVertices.length - 2];
+        int[] faceArray = new int[(vertices.size() - 2) * 6];
+        for (int i = 0; i < vertices.size() - 2; i++) {
+            faceArray[i * 6] = i + 2;
+            faceArray[i * 6 + 2] = i + 1;
+            faceArray[i * 6 + 4] = 0;
+        }
 
         createTriangleMesh(localSpaceVertices, new float[2], faceArray);
+
+        setMaterial(new PhongMaterial(Color.RED));
     }
 
     private void createTriangleMesh(float[] vertices, float[] texCoords, int[] faces) {

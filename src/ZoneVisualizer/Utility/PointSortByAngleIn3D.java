@@ -24,27 +24,56 @@ public class PointSortByAngleIn3D implements Comparator<Vector3> {
         Vector3 u1 = v1.minus(center),
                 u2 = v2.minus(center);
         double dotV1 = u1.dot(partitionVector),
-               dotV2 = u2.dot(partitionVector);
-        if (dotV1 > 0 && dotV2 <= 0) {
-            return 1;
-        }
-        if (dotV1 <= 0 && dotV2 > 0) {
-            return -1;
-        }
-        if (dotV1 == 0 && dotV2 == 0) {
-            double dotRefV1 = u1.dot(angleReference),
-                   dotRefV2 = u2.dot(angleReference);
-            if (dotRefV1 > 0 && dotRefV2 < 0) {
+               dotV2 = u2.dot(partitionVector),
+               dotRefV1, dotRefV2;
+        int quadrant;
+        if (dotV1 >= 0) {
+            if (dotV2 < 0) {
                 return 1;
             }
-            if (dotRefV1 < 0 && dotRefV2 > 0) {
+            dotRefV1 = u1.dot(angleReference);
+            dotRefV2 = u1.dot(angleReference);
+            if (dotRefV1 < 0) {
+                if (dotRefV2 >= 0) {
+                    return 1;
+                }
+                quadrant = 1;
+            }
+            else {
+                if (dotRefV2 < 0) {
+                    return -1;
+                }
+                quadrant = 2;
+            }
+        }
+        else {
+            if (dotV2 >= 0) {
                 return -1;
             }
-            return 0;
+            dotRefV1 = u1.dot(angleReference);
+            dotRefV2 = u1.dot(angleReference);
+            if (dotRefV1 < 0) {
+                if (dotRefV2 >= 0) {
+                    return 1;
+                }
+                quadrant = 3;
+            }
+            else {
+                if (dotRefV2 < 0) {
+                    return -1;
+                }
+                quadrant = 4;
+            }
         }
-        if (dotV1 > 0) {
-            //Todo sort remainder
+        switch (quadrant) {
+            case 1:
+            case 2:
+                return Double.compare(dotRefV1, dotRefV2);
+            case 3:
+            case 4:
+                return -Double.compare(dotRefV1, dotRefV2);
+            default:
+                return 0;
         }
-        return 0;
     }
 }

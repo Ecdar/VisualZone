@@ -3,12 +3,15 @@ package ZoneVisualizer;
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
+import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import ZoneVisualizer.Zones.ConstraintZone;
 import ZoneVisualizer.Zones.Zone;
 import javafx.scene.shape.Shape3D;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ZoneVisualization {
 
@@ -62,15 +65,22 @@ public class ZoneVisualization {
     }
 
     private static void twoClocksSetup() {
-        ZoneVisualizationApp.setCamera2D(new Vector3(5, 5, 0));
-        ZoneVisualizationApp.set3DContent(
-                zone.projectTo2DMesh(currentClockDimensions.get(0), currentClockDimensions.get(1)));
+        WorldPolygon projectedZone = zone.projectTo2DMesh(currentClockDimensions.get(0), currentClockDimensions.get(1));
+        ZoneVisualizationApp.set3DContent(projectedZone);
+        ZoneVisualizationApp.setCamera2D(projectedZone.getTransform().getPositionReadonly());
     }
 
     private static void threeClocksSetup() {
         ZoneVisualizationApp.disableRemainingClockDimensions(true);
-        ZoneVisualizationApp.setCamera3D(new Vector3(5, 5, 5));
-        ZoneVisualizationApp.set3DContent(zone.projectTo3DMesh(
-                currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2)));
+        List<WorldPolygon> projectedZoneFaces = zone.projectTo3DMesh(
+                currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
+        ZoneVisualizationApp.set3DContent(projectedZoneFaces);
+        Vector3 center = new Vector3();
+        List<Vector3> facePositions = projectedZoneFaces.stream()
+                .map(f -> f.getTransform().getPositionReadonly()).collect(Collectors.toList());
+        center.x = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.x));
+        center.y = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.y));
+        center.z = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.z));
+        ZoneVisualizationApp.setCamera3D(center);
     }
 }

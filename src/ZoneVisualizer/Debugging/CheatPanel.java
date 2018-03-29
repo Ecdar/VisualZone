@@ -36,7 +36,7 @@ public class CheatPanel extends GridPane {
         );
         constraints = Arrays.asList(
                 new SingleClockConstraint(Inequality.GreaterThan, false, 2, clockDimensions.get(0)),
-                new SingleClockConstraint(Inequality.LessThan, true, 10, clockDimensions.get(0)),
+                new SingleClockConstraint(Inequality.LessThan, true, 12, clockDimensions.get(0)),
                 new SingleClockConstraint(Inequality.GreaterThan, false, 2, clockDimensions.get(1)),
                 new SingleClockConstraint(Inequality.LessThan, false, 10, clockDimensions.get(1)),
                 new SingleClockConstraint(Inequality.GreaterThan, true, 2, clockDimensions.get(3)),

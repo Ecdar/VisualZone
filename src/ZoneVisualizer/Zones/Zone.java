@@ -72,33 +72,29 @@ public class Zone {
     }
 
     public WorldPolygon projectTo2DMesh(Clock dimension1, Clock dimension2) {
-        double[][] projectedVertices = new double[vertices.size()][3];
+        List<Vector3> projectedVertices = new ArrayList<>();
 
         for (int i = 0; i < vertices.size(); i++) {
             Map<Clock, Double> vertex = vertices.get(i);
-            projectedVertices[i][0] = vertex.get(dimension1);
-            projectedVertices[i][1] = vertex.get(dimension2);
+            Vector3 vectorVertice = new Vector3(vertex.get(dimension1), vertex.get(dimension2), 0);
+            if (!projectedVertices.contains(vectorVertice)) {
+                projectedVertices.add(vectorVertice);
+            }
         }
-        Double minX = Arrays.asList(projectedVertices).stream()
-                .map(doubles -> doubles[0]).min(Double::compare).get();
-        Double maxX = Arrays.asList(projectedVertices).stream()
-                .map(doubles -> doubles[0]).max(Double::compare).get();
-        Double minY = Arrays.asList(projectedVertices).stream()
-                .map(doubles -> doubles[1]).min(Double::compare).get();
-        Double maxY = Arrays.asList(projectedVertices).stream()
-                .map(doubles -> doubles[1]).max(Double::compare).get();
+        Double minX = projectedVertices.stream()
+                .map(vertice -> vertice.x).min(Double::compare).get();
+        Double maxX = projectedVertices.stream()
+                .map(vertice -> vertice.x).max(Double::compare).get();
+        Double minY = projectedVertices.stream()
+                .map(vertice -> vertice.y).min(Double::compare).get();
+        Double maxY = projectedVertices.stream()
+                .map(vertice -> vertice.y).max(Double::compare).get();
 
-        List<Double> vertList = Arrays.asList(projectedVertices).stream()
-                .filter(v -> v[0] == minX || v[0] == maxX || v[1] == minY || v[1] == maxY)
-                .flatMap(v -> Arrays.stream(v).boxed())
+        List<Vector3> hullVertices = projectedVertices.stream()
+                .filter(v -> v.x == minX || v.x == maxX || v.y == minY || v.y == maxY)
                 .collect(Collectors.toList());
 
-        float[] polygonVertices = new float[vertList.size()];
-        for (int i = 0; i < vertList.size(); i++) {
-            polygonVertices[i] = (float)vertList.get(i).doubleValue();
-        }
-
-        return new WorldPolygon(polygonVertices, Vector3.back());
+        return new WorldPolygon(hullVertices, Vector3.back());
     }
 
     public List<WorldPolygon> projectTo3DMesh(Clock dimension1, Clock dimension2, Clock dimension3) {

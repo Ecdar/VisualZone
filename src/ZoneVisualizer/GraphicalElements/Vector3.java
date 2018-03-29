@@ -90,6 +90,11 @@ public class Vector3 {
     }
 
     @Override
+    public int hashCode() {
+        return Double.hashCode(x) ^ Double.hashCode(y) << 2 ^ Double.hashCode(z) >> 2;
+    }
+
+    @Override
     public String toString() {
         return String.format("(%g, %g, %g)", x, y, z);
     }
