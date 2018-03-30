@@ -63,12 +63,12 @@ public class Vector3 {
     }
 
     public Vector3 crossProduct(Vector3 v) {
-        double uvi, uvj, uvk;
-        uvi = this.y * v.z - v.y * this.z;
-        uvj = v.x * this.z - this.x * v.z;
-        uvk = this.x * v.y - v.x * this.y;
+        double uvx, uvy, uvz;
+        uvx = this.y * v.z - v.y * this.z;
+        uvy = v.x * this.z - this.x * v.z;
+        uvz = this.x * v.y - v.x * this.y;
 
-        return new Vector3(uvi, uvj, uvk);
+        return new Vector3(uvx, uvy, uvz);
     }
 
     public double max() {
