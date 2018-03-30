@@ -39,6 +39,15 @@ public class PointSortByAngleIn3D implements Comparator<Vector3> {
             }
         }
         Vector3 crossProduct = u1.crossProduct(u2);
+        if (Double.isNaN(crossProduct.x)) {
+            crossProduct.x = 0;
+        }
+        if (Double.isNaN(crossProduct.y)) {
+            crossProduct.y = 0;
+        }
+        if (Double.isNaN(crossProduct.z)) {
+            crossProduct.z = 0;
+        }
         return crossProduct.dot(normal) < 0 ? 1 : -1;
     }
 

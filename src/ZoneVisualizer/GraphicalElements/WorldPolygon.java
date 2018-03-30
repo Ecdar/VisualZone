@@ -54,11 +54,15 @@ public class WorldPolygon extends MeshView implements Object3D {
             return;
         }
 
-        double maxValue = vertices.stream().map(v -> v.max()).filter(Double::isFinite).max(Double::compareTo).get();
+        double maxValue = vertices.stream()
+                .map(v -> v.max()).filter(Double::isFinite)
+                .max(Double::compareTo).get() * 2;
+        //Todo show infinite zones with more than double size face
+
         Vector3 center = new Vector3();
-        center.x = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.x) ? v.x : maxValue * 2 + 50));
-        center.y = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.y) ? v.y : maxValue * 2 + 50));
-        center.z = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.z) ? v.z : maxValue * 2 + 50));
+        center.x = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.x) ? v.x : maxValue));
+        center.y = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.y) ? v.y : maxValue));
+        center.z = vertices.stream().collect(Collectors.averagingDouble(v -> Double.isFinite(v.z) ? v.z : maxValue));
         transform.setPosition(center);
 
         vertices.sort(new PointSortByAngleIn3D(center, normal, vertices.get(0)));
@@ -67,11 +71,11 @@ public class WorldPolygon extends MeshView implements Object3D {
         for (int i = 0; i < vertices.size(); i++) {
             Vector3 vertex = vertices.get(i);
             localSpaceVertices[i * 3] = Double.isFinite(vertex.x) ?
-                    (float)(vertex.x - center.x) : (float)maxValue * 10 + 100;
+                    (float)(vertex.x - center.x) : (float)(maxValue - center.x);
             localSpaceVertices[i * 3 + 1] = Double.isFinite(vertex.y) ?
-                    (float)(vertex.y - center.y) : (float)maxValue * 10 + 100;
+                    (float)(vertex.y - center.y) : (float)(maxValue - center.y);
             localSpaceVertices[i * 3 + 2] = Double.isFinite(vertex.z) ?
-                    (float)(vertex.z - center.z) : (float)maxValue * 10 + 100;
+                    (float)(vertex.z - center.z) : (float)(maxValue - center.z);
         }
 
         int[] faceArray = new int[(vertices.size() - 2) * 6];
