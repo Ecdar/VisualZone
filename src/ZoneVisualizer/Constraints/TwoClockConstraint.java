@@ -4,6 +4,7 @@ public class TwoClockConstraint extends Constraint {
 
     protected Clock clock1;
     protected Clock clock2;
+    protected TwoClockRestrictionType restrictionType;
 
     public TwoClockConstraint(Inequality inequality, boolean inclusive, double nValue, Clock clock1, Clock clock2) {
         super(inequality, inclusive, nValue);
@@ -35,5 +36,15 @@ public class TwoClockConstraint extends Constraint {
     @Override
     public String toString() {
         return clock1.getName() + " - " + clock2.getName() + " " + super.toString();
+    }
+
+    public TwoClockRestrictionType getRestrictionType() {
+        return restrictionType;
+    }
+
+    public void setRestrictionType(TwoClockRestrictionType restrictionType) {
+        if (restrictionType != TwoClockRestrictionType.NotFound) {
+            this.restrictionType = restrictionType;
+        }
     }
 }

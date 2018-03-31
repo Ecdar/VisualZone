@@ -3,11 +3,9 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
-import ZoneVisualizer.Utility.BackedUpValue;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
 
 public class Zone {
 
@@ -35,21 +33,49 @@ public class Zone {
         }
         Clock clock = remainingClocks.get(0);
         remainingClocks.remove(clock);
-        Constraint chosenConstraint = constraintZone.getMinConstraint(clock);
-        if (chosenConstraint == null) {
-            chosenConstraint = new SingleClockConstraint
-                    (Inequality.GreaterThan, false, 0, clock);
-        }
-        chosenConstraints.put(clock, chosenConstraint);
-        findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
 
-        chosenConstraint = constraintZone.getMaxConstraint(clock);
-        if (chosenConstraint == null) {
-            chosenConstraint = new SingleClockConstraint
-                    (Inequality.LessThan, false, Double.POSITIVE_INFINITY, clock);
+        Constraint chosenConstraint;
+        TwoClockConstraint tcConstraint;
+
+        //Handle right and bottom sides of rectangle
+        tcConstraint = constraintZone.getTCConstraint(clock);
+        if (tcConstraint == null ||
+                (tcConstraint.getRestrictionType() != TwoClockRestrictionType.CutOfBottomAndRightSide
+                && tcConstraint.getRestrictionType() != TwoClockRestrictionType.CutOfRightSide)) {
+            //Right flat side
+            chosenConstraint = constraintZone.getMaxConstraint(clock);
+            if (chosenConstraint == null) {
+                chosenConstraint = new SingleClockConstraint
+                        (Inequality.LessThan, false, Double.POSITIVE_INFINITY, clock);
+            }
+            chosenConstraints.put(clock, chosenConstraint);
+            findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
         }
-        chosenConstraints.put(clock, chosenConstraint);
-        findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
+        if (tcConstraint != null &&
+                (tcConstraint.getRestrictionType() == TwoClockRestrictionType.CutOfBottomAndRightSide
+                || tcConstraint.getRestrictionType() == TwoClockRestrictionType.CutOfRightSide
+                || tcConstraint.getRestrictionType() == TwoClockRestrictionType.CutOfNothing)) {
+            //Right/bottom slanted line crosses either top or bottom side (or both)
+            chosenConstraints.put(clock, tcConstraint);
+            findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
+        }
+
+        //Handle left and top of rectangle
+        tcConstraint = constraintZone.getTCConstraintBySecondary(clock);
+        if (tcConstraint == null ||
+                (tcConstraint.getRestrictionType() != TwoClockRestrictionType.CutOfBottomAndRightSide
+                && tcConstraint.getRestrictionType() != TwoClockRestrictionType.CutOfBottom)) {
+            //Left flat side
+            chosenConstraint = constraintZone.getMinConstraint(clock);
+            if (chosenConstraint == null) {
+                chosenConstraint = new SingleClockConstraint
+                        (Inequality.GreaterThan, false, 0, clock);
+            }
+            chosenConstraints.put(clock, chosenConstraint);
+            findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
+        }
+        //todo handle left/top slanted line across top or bottom (or both)
+
         remainingClocks.add(clock);
     }
 
@@ -83,13 +109,13 @@ public class Zone {
             }
         }
         Double minX = projectedVertices.stream()
-                .map(vertice -> vertice.x).min(Double::compare).get();
+                .map(vertex -> vertex.x).min(Double::compare).get();
         Double maxX = projectedVertices.stream()
-                .map(vertice -> vertice.x).max(Double::compare).get();
+                .map(vertex -> vertex.x).max(Double::compare).get();
         Double minY = projectedVertices.stream()
-                .map(vertice -> vertice.y).min(Double::compare).get();
+                .map(vertex -> vertex.y).min(Double::compare).get();
         Double maxY = projectedVertices.stream()
-                .map(vertice -> vertice.y).max(Double::compare).get();
+                .map(vertex -> vertex.y).max(Double::compare).get();
 
         List<Vector3> hullVertices = projectedVertices.stream()
                 .filter(v -> v.x == minX || v.x == maxX || v.y == minY || v.y == maxY)

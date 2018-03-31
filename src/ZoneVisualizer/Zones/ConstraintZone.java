@@ -3,12 +3,14 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConstraintZone {
 
-    private Map<Clock, SingleClockConstraint> minBoundConstraints = new HashMap<>();
-    private Map<Clock, SingleClockConstraint> maxBoundConstraints = new HashMap<>();
-    private Map<Clock, TwoClockConstraint> twoClockConstraints = new HashMap<>();
+    private final Map<Clock, SingleClockConstraint> minBoundConstraints = new HashMap<>();
+    private final Map<Clock, SingleClockConstraint> maxBoundConstraints = new HashMap<>();
+    private final Map<Clock, TwoClockConstraint> twoClockConstraints = new HashMap<>();
+    private final Map<Clock, TwoClockConstraint> twoClockConstraintsBySecondary = new HashMap<>();
     private boolean restrictedToEmptiness = false;
 
     public ConstraintZone(Collection<Constraint> constraints) {
@@ -22,6 +24,8 @@ public class ConstraintZone {
         }
 
         checkTwoClockAgainstOneClock();
+        twoClockConstraintsBySecondary.putAll(twoClockConstraints.values().stream()
+                .collect(Collectors.toMap(tcc -> tcc.getClock2(), tcc -> tcc)));
     }
 
     private boolean addSingleClockConstraint(SingleClockConstraint constraint) {
@@ -96,18 +100,24 @@ public class ConstraintZone {
             if (yMin != null) {
                 minBoundConstraints.remove(yMin.getClock());
             }
+            tcConstraint.setRestrictionType(TwoClockRestrictionType.CutOfBottomAndRightSide);
         }
         else if (nGreaterThanMinMin && nLessThanMaxMax) {
             //Cuts of right side
             if (xMax != null) {
                 maxBoundConstraints.remove(xMax.getClock());
             }
+            tcConstraint.setRestrictionType(TwoClockRestrictionType.CutOfRightSide);
         }
         else if (nLessThanMinMin && nGreaterThanMaxMax) {
             //Cuts of bottom
             if (yMin != null) {
                 minBoundConstraints.remove(yMin.getClock());
             }
+            tcConstraint.setRestrictionType(TwoClockRestrictionType.CutOfBottom);
+        }
+        else {
+            tcConstraint.setRestrictionType(TwoClockRestrictionType.CutOfNothing);
         }
     }
 
@@ -213,6 +223,10 @@ public class ConstraintZone {
 
     public TwoClockConstraint getTCConstraint(Clock key) {
         return twoClockConstraints.get(key);
+    }
+
+    public TwoClockConstraint getTCConstraintBySecondary(Clock key) {
+        return twoClockConstraintsBySecondary.get(key);
     }
 
     public Collection<SingleClockConstraint> getMinConstraints() {
