@@ -67,7 +67,8 @@ public class ZoneVisualization {
     private static void twoClocksSetup() {
         WorldPolygon projectedZone = zone.projectTo2DMesh(currentClockDimensions.get(0), currentClockDimensions.get(1));
         ZoneVisualizationApp.set3DContent(projectedZone);
-        ZoneVisualizationApp.setCamera2D(projectedZone.getTransform().getPositionReadonly());
+        ZoneVisualizationApp.setCamera2D(projectedZone.getTransform().getPositionReadonly(),
+                currentClockDimensions.get(0), currentClockDimensions.get(1));
     }
 
     private static void threeClocksSetup() {
@@ -81,6 +82,7 @@ public class ZoneVisualization {
         center.x = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.x));
         center.y = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.y));
         center.z = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.z));
-        ZoneVisualizationApp.setCamera3D(center);
+        ZoneVisualizationApp.setCamera3D(center,
+                currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
     }
 }

@@ -1,16 +1,11 @@
 package ZoneVisualizer;
 
-import ZoneVisualizer.Constraints.Constraint;
-import ZoneVisualizer.Constraints.Inequality;
-import ZoneVisualizer.Constraints.SingleClockConstraint;
 import ZoneVisualizer.Debugging.CheatPanel;
 import ZoneVisualizer.Utility.LINQ;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.*;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
@@ -18,13 +13,11 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Shape3D;
 import javafx.stage.Stage;
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.GraphicalElements.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -147,20 +140,27 @@ public class ZoneVisualizationApp extends Application {
         }
     }
 
-    public static void setCamera2D(Vector3 focusPoint) {
+    public static void setCamera2D(Vector3 focusPoint, Clock clock1, Clock clock2) {
         gizmo.showThirdDimension(false);
         cameraTransform.setRotation(Vector3.zero());
         cameraTransform.setPivot(focusPoint);
         cameraTransform.setPositionX(focusPoint.x);
         cameraTransform.setPositionY(focusPoint.y);
         CameraContext.setIs2D(true);
+
+        gizmo.setXaxisName(clock1.getName());
+        gizmo.setYaxisName(clock2.getName());
     }
 
-    public static void setCamera3D(Vector3 focusPoint) {
+    public static void setCamera3D(Vector3 focusPoint, Clock clock1, Clock clock2, Clock clock3) {
         gizmo.showThirdDimension(true);
         cameraTransform.setPivot(focusPoint);
         cameraTransform.setPositionX(focusPoint.x);
         cameraTransform.setPositionY(focusPoint.y);
         CameraContext.setIs2D(false);
+
+        gizmo.setXaxisName(clock1.getName());
+        gizmo.setYaxisName(clock2.getName());
+        gizmo.setZaxisName(clock3.getName());
     }
 }

@@ -2,6 +2,7 @@ package ZoneVisualizer.GraphicalElements;
 
 import javafx.geometry.VPos;
 import javafx.scene.Group;
+import javafx.scene.control.Tooltip;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
@@ -9,9 +10,13 @@ import javafx.scene.text.*;
 
 public class Gizmo3D extends Group {
 
-    Box xAxis;
-    Box yAxis;
-    Box zAxis;
+    private Box xAxis;
+    private Box yAxis;
+    private Box zAxis;
+
+    private Tooltip xTooltip = new Tooltip("X-axis");
+    private Tooltip yTooltip = new Tooltip("Y-axis");
+    private Tooltip zTooltip = new Tooltip("Z-axis");
 
     public Gizmo3D(double thickness, double scale) {
         super();
@@ -25,6 +30,10 @@ public class Gizmo3D extends Group {
         zAxis.setMaterial(new PhongMaterial(Color.BLUE));
 
         scaleTo(scale);
+
+        Tooltip.install(xAxis, xTooltip);
+        Tooltip.install(yAxis, yTooltip);
+        Tooltip.install(zAxis, zTooltip);
     }
 
     public void scaleTo(double scale) {
@@ -39,5 +48,17 @@ public class Gizmo3D extends Group {
 
     public void showThirdDimension(boolean show) {
         zAxis.setVisible(show);
+    }
+
+    public void setXaxisName(String value) {
+        xTooltip.setText(value);
+    }
+
+    public void setYaxisName(String value) {
+        yTooltip.setText(value);
+    }
+
+    public void setZaxisName(String value) {
+        zTooltip.setText(value);
     }
 }

@@ -37,10 +37,10 @@ public class CheatPanel extends GridPane {
         constraints = Arrays.asList(
                 new SingleClockConstraint(Inequality.GreaterThan, false, 2, clockDimensions.get(0)),
                 new SingleClockConstraint(Inequality.LessThan, true, 12, clockDimensions.get(0)),
-                new SingleClockConstraint(Inequality.GreaterThan, false, 2, clockDimensions.get(1)),
+                new SingleClockConstraint(Inequality.GreaterThan, false, 1, clockDimensions.get(1)),
                 new SingleClockConstraint(Inequality.LessThan, false, 10, clockDimensions.get(1)),
-                new SingleClockConstraint(Inequality.GreaterThan, true, 2, clockDimensions.get(3)),
-                new SingleClockConstraint(Inequality.LessThan, false, 10, clockDimensions.get(3)),
+                new SingleClockConstraint(Inequality.GreaterThan, true, 5, clockDimensions.get(3)),
+                new SingleClockConstraint(Inequality.LessThan, false, 15, clockDimensions.get(3)),
                 new TwoClockConstraint(Inequality.GreaterThan, false, -6, clockDimensions.get(1), clockDimensions.get(0)),
                 new TwoClockConstraint(Inequality.LessThan, true, 6, clockDimensions.get(1), clockDimensions.get(0)),
                 new TwoClockConstraint(Inequality.LessThan, true, 4, clockDimensions.get(1), clockDimensions.get(3)),
@@ -66,14 +66,5 @@ public class CheatPanel extends GridPane {
         }
 
         ZoneVisualization.initialize(clockDimensions, chosenConstraints);
-
-//        ArrayList<Shape3D> shapes = new ArrayList<>();
-//        Tetragon rect = new Tetragon(-1, -1, 0, -1, 1, 0, 1, 1, 0, 1, -1, 0);
-//        rect.setMaterial(new PhongMaterial(Color.RED));
-//        rect.getTransform().setPosition(5, 5, 5);
-//        rect.getTransform().setRotation(0, 0, 45);
-//        rect.getTransform().setScale(1, 1, 1);
-//        shapes.add(rect);
-//        ZoneVisualizationApp.set3DContent(shapes);
     }
 }
