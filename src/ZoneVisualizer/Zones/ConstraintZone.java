@@ -166,7 +166,7 @@ public class ConstraintZone {
         return false;
     }
 
-    //Returns true if the given constraints with the same 2 clocks restricts us to the empty space
+    //Returns true if the given constraints with the same 2 clocksAsCollection restricts us to the empty space
     private boolean checkEmptiness(TwoClockConstraint c1, TwoClockConstraint c2) {
         if (c1 == null || c2 == null) {
             return false;

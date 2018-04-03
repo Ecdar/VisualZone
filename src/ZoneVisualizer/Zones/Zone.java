@@ -23,9 +23,67 @@ public class Zone {
             return;
         }
 
+        Set<Constraint> origin = new HashSet<>();
+        for (Clock clock : clocks) {
+            Constraint c = constraintZone.getMinConstraint(clock);
+            if (c != null) {
+                origin.add(c);
+            }
+            else {
+                origin.add(constraintZone.getTCConstraintBySecondary(clock));
+            }
+        }
+
+        List<Set<Constraint>> foundVertices = new ArrayList<>();
+        TreeMap<Set<Constraint>, Constraint> verticesWithNewestConstraint = new TreeMap<>();
+        verticesWithNewestConstraint.put(origin, null);
+        foundVertices.add(origin);
+
+        while (!verticesWithNewestConstraint.isEmpty()) {
+            Map.Entry<Set<Constraint>, Constraint> vertexToExpandFrom = verticesWithNewestConstraint.firstEntry();
+            for (Constraint c : new ArrayList<>(vertexToExpandFrom.getKey())) {
+                if (c == vertexToExpandFrom.getValue()) {
+                    continue;
+                }
+                if (clocks.stream().noneMatch(clock -> c.getNormalComponent(clock) > 0)) {
+                    //Todo Should catch all constraints that won't make a value grater by being removed
+                    //(or ignore? only helps performance really)
+                    continue;
+                }
+                Set<Constraint> nextVertex = new HashSet<>(vertexToExpandFrom.getKey());
+                nextVertex.remove(c);
+
+                Constraint replacingConstraint = null;
+                //Todo find constraint to replace c with
+
+                if (!foundVertices.contains(nextVertex)) {
+                    foundVertices.add(nextVertex);
+                    verticesWithNewestConstraint.put(nextVertex, replacingConstraint);
+                }
+            }
+
+
+            verticesWithNewestConstraint.remove(vertexToExpandFrom.getKey());
+        }
+
+
+
+
+        //Old method (doesn't handle two clock constraints)
         List<Clock> tempClocks = new ArrayList<>(clocks);
         Map<Clock, Constraint> chosenConstraints = new HashMap<>();
         findVerticesForClocks(chosenConstraints, tempClocks, constraintZone);
+    }
+
+    private Constraint findNextConstraintToExpandAlong(Collection<Clock> dimensionsToExpand, Iterator<Constraint> constraintIterator) {
+        Constraint c;
+        while (constraintIterator.hasNext()) {
+            c = constraintIterator.next();
+            if (c.getNormalComponent()) {
+                return c;
+            }
+        }
+        return null;
     }
 
     private void findVerticesForClocks(Map<Clock, Constraint> chosenConstraints,
@@ -125,6 +183,8 @@ public class Zone {
                 projectedVertices.add(projectedVertex);
             }
         }
+        //Find the single clock constraint faces (non-tilted faces)
+        //(Inefficient? Traverses vertices a ton of times. Could use faces instead)
         Double minX = getMinFromMappedValues(projectedVertices, vertex -> vertex.x);
         Double maxX = getMaxFromMappedValues(projectedVertices, vertex -> vertex.x);
         Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);
@@ -135,15 +195,15 @@ public class Zone {
         List<Vector3> planeVertices = projectedVertices.stream()
                 .filter(v -> v.x == minX)
                 .collect(Collectors.toList());
-        List<Vector3> xMinHullVertices = getHullVerticesOfXPlane(planeVertices);
-        WorldPolygon polygon = new WorldPolygon(xMinHullVertices, Vector3.left());
+        List<Vector3> hullVertices = getHullVerticesOfXPlane(planeVertices);
+        WorldPolygon polygon = new WorldPolygon(hullVertices, Vector3.left());
         projectedPolygons.add(polygon);
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.x == maxX)
                 .collect(Collectors.toList());
-        List<Vector3> xMaxHullVertices = getHullVerticesOfXPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(xMaxHullVertices, Vector3.right()));
+        hullVertices = getHullVerticesOfXPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.right()));
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.y == minY)
@@ -154,21 +214,23 @@ public class Zone {
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.y == maxY)
                 .collect(Collectors.toList());
-        List<Vector3> yMaxHullVertices = getHullVerticesOfYPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(yMaxHullVertices, Vector3.up()));
+        hullVertices = getHullVerticesOfYPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.up()));
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.z == minZ)
                 .collect(Collectors.toList());
-        List<Vector3> zMinHullVertices = getHullVerticesOfZPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(zMinHullVertices, Vector3.back()));
+        hullVertices = getHullVerticesOfZPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.back()));
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.z == maxZ)
                 .collect(Collectors.toList());
-        List<Vector3> zMaxHullVertices = getHullVerticesOfZPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(zMaxHullVertices, Vector3.forward()));
+        hullVertices = getHullVerticesOfZPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.forward()));
 
+        //Finds the two clock constraint faces (tilted faces)
+        //(Doesn't reduce to hull vertices, so there will be more triangles than necessary)
         for (Map.Entry<Constraint, Face> face : faces.entrySet()) {
             if (face.getKey() instanceof TwoClockConstraint) {
                 TwoClockConstraint tcConstraint = (TwoClockConstraint)face.getKey();
@@ -231,19 +293,9 @@ public class Zone {
     protected class Face {
         private final List<Integer> verticeIndices = new ArrayList<>();
         private final Constraint constraint;
-        private final Map<Clock, Double> normal = new HashMap<>();
 
         public Face(Constraint constraint) {
             this.constraint = constraint;
-            if (constraint instanceof SingleClockConstraint) {
-                SingleClockConstraint scConstraint = (SingleClockConstraint)constraint;
-                normal.put(scConstraint.getClock(), scConstraint.getInequality() == Inequality.GreaterThan ? 1d : -1d);
-            }
-            else {
-                TwoClockConstraint tcConstraint = (TwoClockConstraint)constraint;
-                normal.put(tcConstraint.getClock1(), 1d);
-                normal.put(tcConstraint.getClock2(), -1d);
-            }
         }
 
         public WorldPolygon project(Clock dimension1, Clock dimension2, Clock dimension3) {
@@ -251,10 +303,7 @@ public class Zone {
                     .map(i -> vertices.get(i))
                     .map(v -> new Vector3(v.get(dimension1), v.get(dimension2), v.get(dimension3)))
                     .collect(Collectors.toList());
-            Vector3 vNormal = new Vector3();
-            vNormal.x = normal.containsKey(dimension1) ? normal.get(dimension1) : 0;
-            vNormal.y = normal.containsKey(dimension2) ? normal.get(dimension2) : 0;
-            vNormal.z = normal.containsKey(dimension3) ? normal.get(dimension3) : 0;
+            Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
 
             return new WorldPolygon(projectedVertices, vNormal.multiply(-1));
         }

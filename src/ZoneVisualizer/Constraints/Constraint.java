@@ -1,5 +1,11 @@
 package ZoneVisualizer.Constraints;
 
+import ZoneVisualizer.GraphicalElements.Vector3;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class Constraint {
 
     protected Inequality inequality;
@@ -23,6 +29,12 @@ public abstract class Constraint {
     public boolean isInclusive() {
         return inclusive;
     }
+
+    public abstract Vector3 getProjectedNormal(Clock dimension1, Clock dimension2, Clock dimension3);
+
+    public abstract double getNormalComponent(Clock dimension);
+
+    public abstract Collection<Clock> clocksAsCollection();
 
     @Override
     public String toString() {
