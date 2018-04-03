@@ -3,8 +3,11 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
+import ZoneVisualizer.Utility.LINQ;
+import com.sun.deploy.util.ArrayUtil;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Zone {
@@ -101,34 +104,133 @@ public class Zone {
     public WorldPolygon projectTo2DMesh(Clock dimension1, Clock dimension2) {
         List<Vector3> projectedVertices = new ArrayList<>();
 
-        for (int i = 0; i < vertices.size(); i++) {
-            Map<Clock, Double> vertex = vertices.get(i);
-            Vector3 vectorVertice = new Vector3(vertex.get(dimension1), vertex.get(dimension2), 0);
-            if (!projectedVertices.contains(vectorVertice)) {
-                projectedVertices.add(vectorVertice);
+        for (Map<Clock, Double> vertex : vertices) {
+            Vector3 projectedVertex = new Vector3(vertex.get(dimension1), vertex.get(dimension2), 0);
+            if (!projectedVertices.contains(projectedVertex)) {
+                projectedVertices.add(projectedVertex);
             }
         }
-        Double minX = projectedVertices.stream()
-                .map(vertex -> vertex.x).min(Double::compare).get();
-        Double maxX = projectedVertices.stream()
-                .map(vertex -> vertex.x).max(Double::compare).get();
-        Double minY = projectedVertices.stream()
-                .map(vertex -> vertex.y).min(Double::compare).get();
-        Double maxY = projectedVertices.stream()
-                .map(vertex -> vertex.y).max(Double::compare).get();
-
-        List<Vector3> hullVertices = projectedVertices.stream()
-                .filter(v -> v.x == minX || v.x == maxX || v.y == minY || v.y == maxY)
-                .collect(Collectors.toList());
+        List<Vector3> hullVertices = getHullVerticesOfZPlane(projectedVertices);
 
         return new WorldPolygon(hullVertices, Vector3.back());
     }
 
     public List<WorldPolygon> projectTo3DMesh(Clock dimension1, Clock dimension2, Clock dimension3) {
         List<WorldPolygon> projectedPolygons = new ArrayList<>();
-        //Todo project to 3D space
+        List<Vector3> projectedVertices = new ArrayList<>();
+
+        for (Map<Clock, Double> vertex : vertices) {
+            Vector3 projectedVertex = new Vector3(vertex.get(dimension1), vertex.get(dimension2), vertex.get(dimension3));
+            if (!projectedVertices.contains(projectedVertex)) {
+                projectedVertices.add(projectedVertex);
+            }
+        }
+        Double minX = getMinFromMappedValues(projectedVertices, vertex -> vertex.x);
+        Double maxX = getMaxFromMappedValues(projectedVertices, vertex -> vertex.x);
+        Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);
+        Double maxY = getMaxFromMappedValues(projectedVertices, vertex -> vertex.y);
+        Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
+        Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
+
+        List<Vector3> planeVertices;
+
+        planeVertices = projectedVertices.stream()
+                .filter(v -> v.x == minX)
+                .collect(Collectors.toList());
+        List<Vector3> xMinHullVertices = getHullVerticesOfXPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(xMinHullVertices, Vector3.left()));
+
+        planeVertices = projectedVertices.stream()
+                .filter(v -> v.x == maxX)
+                .collect(Collectors.toList());
+        List<Vector3> xMaxHullVertices = getHullVerticesOfXPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(xMaxHullVertices, Vector3.right()));
+
+        planeVertices = projectedVertices.stream()
+                .filter(v -> v.y == minY)
+                .collect(Collectors.toList());
+        List<Vector3> yMinHullVertices = getHullVerticesOfYPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(yMinHullVertices, Vector3.down()));
+
+        planeVertices = projectedVertices.stream()
+                .filter(v -> v.y == maxY)
+                .collect(Collectors.toList());
+        List<Vector3> yMaxHullVertices = getHullVerticesOfYPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(yMaxHullVertices, Vector3.up()));
+
+        planeVertices = projectedVertices.stream()
+                .filter(v -> v.z == minZ)
+                .collect(Collectors.toList());
+        List<Vector3> zMinHullVertices = getHullVerticesOfZPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(zMinHullVertices, Vector3.back()));
+
+        planeVertices = projectedVertices.stream()
+                .filter(v -> v.z == maxZ)
+                .collect(Collectors.toList());
+        List<Vector3> zMaxHullVertices = getHullVerticesOfZPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(zMaxHullVertices, Vector3.forward()));
+
+        if (!LINQ.overlaps(xMinHullVertices, yMaxHullVertices)) {
+            //todo find y - x < k constraint
+        }
+        if (!LINQ.overlaps(yMinHullVertices, xMaxHullVertices)) {
+            //todo find x - y < k constraint
+        }
+        if (!LINQ.overlaps(xMinHullVertices, zMaxHullVertices)) {
+            //todo find z - x < k constraint
+        }
+        if (!LINQ.overlaps(zMinHullVertices, xMaxHullVertices)) {
+            //todo find x - z < k constraint
+        }
+        if (!LINQ.overlaps(zMinHullVertices, yMaxHullVertices)) {
+            //todo find y - z < k constraint
+        }
+        if (!LINQ.overlaps(yMinHullVertices, zMaxHullVertices)) {
+            //todo find z - y < k constraint
+        }
 
         return projectedPolygons;
+    }
+
+    private List<Vector3> getHullVerticesOfXPlane(List<Vector3> projectedVertices) {
+        Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);
+        Double maxY = getMaxFromMappedValues(projectedVertices, vertex -> vertex.y);
+        Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
+        Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
+
+        return projectedVertices.stream()
+                .filter(v -> v.y == minY || v.y == maxY || v.z == minZ || v.z == maxZ)
+                .collect(Collectors.toList());
+    }
+
+    private List<Vector3> getHullVerticesOfYPlane(List<Vector3> projectedVertices) {
+        Double minX = getMinFromMappedValues(projectedVertices, vertex -> vertex.x);
+        Double maxX = getMaxFromMappedValues(projectedVertices, vertex -> vertex.x);
+        Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
+        Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
+
+        return projectedVertices.stream()
+                .filter(v -> v.x == minX || v.x == maxX || v.z == minZ || v.z == maxZ)
+                .collect(Collectors.toList());
+    }
+
+    private List<Vector3> getHullVerticesOfZPlane(List<Vector3> projectedVertices) {
+        Double minX = getMinFromMappedValues(projectedVertices, vertex -> vertex.x);
+        Double maxX = getMaxFromMappedValues(projectedVertices, vertex -> vertex.x);
+        Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);
+        Double maxY = getMaxFromMappedValues(projectedVertices, vertex -> vertex.y);
+
+        return projectedVertices.stream()
+                .filter(v -> v.x == minX || v.x == maxX || v.y == minY || v.y == maxY)
+                .collect(Collectors.toList());
+    }
+
+    private Double getMinFromMappedValues(List<Vector3> projectedVertices, Function<? super Vector3, ? extends Double> mapper) {
+        return projectedVertices.stream().map(mapper).min(Double::compare).get();
+    }
+
+    private Double getMaxFromMappedValues(List<Vector3> projectedVertices, Function<? super Vector3, ? extends Double> mapper) {
+        return projectedVertices.stream().map(mapper).max(Double::compare).get();
     }
 
     protected class Face {

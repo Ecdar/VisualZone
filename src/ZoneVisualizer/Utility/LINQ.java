@@ -18,4 +18,15 @@ public class LINQ {
         }
         return result;
     }
+
+    public static <T> boolean overlaps(Collection<T> collection1, Collection<T> collection2) {
+        for (T i : collection1) {
+            for (T j : collection2) {
+                if (i != null && i.equals(j)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

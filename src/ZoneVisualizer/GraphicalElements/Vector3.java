@@ -2,6 +2,8 @@ package ZoneVisualizer.GraphicalElements;
 
 import ZoneVisualizer.Utility.Utility;
 
+import java.util.stream.Stream;
+
 public class Vector3 {
 
     public static Vector3 right() { return new Vector3(1, 0, 0); }
@@ -74,6 +76,10 @@ public class Vector3 {
     public double max() {
         double maximum = x > y ? x : y;
         return maximum < z ? z : maximum;
+    }
+
+    public Stream<Double> asStream() {
+        return Stream.of(x, y, z);
     }
 
     @Override

@@ -55,7 +55,7 @@ public class WorldPolygon extends MeshView implements Object3D {
         }
 
         double maxValue = Math.max(vertices.stream()
-                .map(v -> v.max()).filter(Double::isFinite)
+                .flatMap(v -> v.asStream()).filter(Double::isFinite)
                 .max(Double::compareTo).get() * 2, 50);
         //Todo show infinite zones with more than double size face
 
