@@ -96,7 +96,7 @@ public class Zone {
 
     private void addVertexToFace(int vertexIndex, Constraint constraint) {
         if (!faces.containsKey(constraint)) {
-            faces.put(constraint, new Face());
+            faces.put(constraint, new Face(constraint));
         }
         faces.get(constraint).addVertexIndex(vertexIndex);
     }
@@ -132,13 +132,12 @@ public class Zone {
         Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
         Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
 
-        List<Vector3> planeVertices;
-
-        planeVertices = projectedVertices.stream()
+        List<Vector3> planeVertices = projectedVertices.stream()
                 .filter(v -> v.x == minX)
                 .collect(Collectors.toList());
         List<Vector3> xMinHullVertices = getHullVerticesOfXPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(xMinHullVertices, Vector3.left()));
+        WorldPolygon polygon = new WorldPolygon(xMinHullVertices, Vector3.left());
+        projectedPolygons.add(polygon);
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.x == maxX)
@@ -170,23 +169,13 @@ public class Zone {
         List<Vector3> zMaxHullVertices = getHullVerticesOfZPlane(planeVertices);
         projectedPolygons.add(new WorldPolygon(zMaxHullVertices, Vector3.forward()));
 
-        if (!LINQ.overlaps(xMinHullVertices, yMaxHullVertices)) {
-            //todo find y - x < k constraint
-        }
-        if (!LINQ.overlaps(yMinHullVertices, xMaxHullVertices)) {
-            //todo find x - y < k constraint
-        }
-        if (!LINQ.overlaps(xMinHullVertices, zMaxHullVertices)) {
-            //todo find z - x < k constraint
-        }
-        if (!LINQ.overlaps(zMinHullVertices, xMaxHullVertices)) {
-            //todo find x - z < k constraint
-        }
-        if (!LINQ.overlaps(zMinHullVertices, yMaxHullVertices)) {
-            //todo find y - z < k constraint
-        }
-        if (!LINQ.overlaps(yMinHullVertices, zMaxHullVertices)) {
-            //todo find z - y < k constraint
+        for (Map.Entry<Constraint, Face> face : faces.entrySet()) {
+            if (face.getKey() instanceof TwoClockConstraint) {
+                TwoClockConstraint tcConstraint = (TwoClockConstraint)face.getKey();
+                if (isTCConstraintOfClocks(tcConstraint, dimension1, dimension2, dimension3)) {
+                    projectedPolygons.add(face.getValue().project(dimension1, dimension2, dimension3));
+                }
+            }
         }
 
         return projectedPolygons;
@@ -233,11 +222,49 @@ public class Zone {
         return projectedVertices.stream().map(mapper).max(Double::compare).get();
     }
 
+    private boolean isTCConstraintOfClocks(TwoClockConstraint tcConstraint, Clock c1, Clock c2, Clock c3) {
+        Clock clock1 = tcConstraint.getClock1(), clock2 = tcConstraint.getClock2();
+        return  (clock1 == c1 || clock1 == c2 || clock1 == c3) &&
+                (clock2 == c1 || clock2 == c2 || clock2 == c3);
+    }
+
     protected class Face {
-        private List<Integer> verticeIndices = new ArrayList<>();
+        private final List<Integer> verticeIndices = new ArrayList<>();
+        private final Constraint constraint;
+        private final Map<Clock, Double> normal = new HashMap<>();
+
+        public Face(Constraint constraint) {
+            this.constraint = constraint;
+            if (constraint instanceof SingleClockConstraint) {
+                SingleClockConstraint scConstraint = (SingleClockConstraint)constraint;
+                normal.put(scConstraint.getClock(), scConstraint.getInequality() == Inequality.GreaterThan ? 1d : -1d);
+            }
+            else {
+                TwoClockConstraint tcConstraint = (TwoClockConstraint)constraint;
+                normal.put(tcConstraint.getClock1(), 1d);
+                normal.put(tcConstraint.getClock2(), -1d);
+            }
+        }
+
+        public WorldPolygon project(Clock dimension1, Clock dimension2, Clock dimension3) {
+            List<Vector3> projectedVertices = verticeIndices.stream()
+                    .map(i -> vertices.get(i))
+                    .map(v -> new Vector3(v.get(dimension1), v.get(dimension2), v.get(dimension3)))
+                    .collect(Collectors.toList());
+            Vector3 vNormal = new Vector3();
+            vNormal.x = normal.containsKey(dimension1) ? normal.get(dimension1) : 0;
+            vNormal.y = normal.containsKey(dimension2) ? normal.get(dimension2) : 0;
+            vNormal.z = normal.containsKey(dimension3) ? normal.get(dimension3) : 0;
+
+            return new WorldPolygon(projectedVertices, vNormal.multiply(-1));
+        }
 
         public List<Integer> getVerticeIndices() {
             return verticeIndices;
+        }
+
+        public Constraint getConstraint() {
+            return constraint;
         }
 
         public void addVertexIndex(Integer index) {
