@@ -23,16 +23,7 @@ public class Zone {
             return;
         }
 
-        Set<Constraint> origin = new HashSet<>();
-        for (Clock clock : clocks) {
-            Constraint c = constraintZone.getMinConstraint(clock);
-            if (c != null) {
-                origin.add(c);
-            }
-            else {
-                origin.add(constraintZone.getTCConstraintBySecondary(clock));
-            }
-        }
+        Set<Constraint> origin = findOrigin(constraintZone, clocks);
 
         List<Set<Constraint>> foundVertices = new ArrayList<>();
         TreeMap<Set<Constraint>, Constraint> verticesWithNewestConstraint = new TreeMap<>();
@@ -46,12 +37,13 @@ public class Zone {
                     continue;
                 }
                 if (clocks.stream().noneMatch(clock -> c.getNormalComponent(clock) > 0)) {
-                    //Todo Should catch all constraints that won't make a value grater by being removed
-                    //(or ignore? only helps performance really)
                     continue;
                 }
                 Set<Constraint> nextVertex = new HashSet<>(vertexToExpandFrom.getKey());
                 nextVertex.remove(c);
+                if (nextVertex.size() > clocks.size() - 1) {
+                    //Degenerate vertex
+                }
 
                 Constraint replacingConstraint = null;
                 //Todo find constraint to replace c with
@@ -75,15 +67,32 @@ public class Zone {
         findVerticesForClocks(chosenConstraints, tempClocks, constraintZone);
     }
 
-    private Constraint findNextConstraintToExpandAlong(Collection<Clock> dimensionsToExpand, Iterator<Constraint> constraintIterator) {
-        Constraint c;
-        while (constraintIterator.hasNext()) {
-            c = constraintIterator.next();
-            if (c.getNormalComponent()) {
-                return c;
+    private Set<Constraint> findOrigin(ConstraintZone constraintZone, Collection<Clock> clocks) {
+        Set<Constraint> origin = new HashSet<>();
+        for (Clock clock : clocks) {
+            Constraint c = constraintZone.getMinConstraint(clock);
+            if (c != null) {
+                //Simple case; a greater than constraint exists for this dimension
+                origin.add(c);
+                continue;
             }
+            Collection<TwoClockConstraint> twoClockMaxConstraints = constraintZone.getTCConstraintBySecondary(clock);
+            if (!twoClockMaxConstraints.isEmpty()) {
+                //There exists one or more two clock constraints bounding the minimum value of this dimension
+                //Find the highest minimum bound. Can be several constraints if origin is degenerate
+                double originNValue = twoClockMaxConstraints.stream()
+                        .map(Constraint::getnValue)
+                        .min(Double::compareTo).get();
+                List<TwoClockConstraint> maximizedMinBounds = twoClockMaxConstraints.stream()
+                        .filter(tcc -> tcc.getnValue() == originNValue)
+                        .collect(Collectors.toList());
+                origin.addAll(maximizedMinBounds);
+                continue;
+            }
+            //No bounds on this dimension. Add an implicit greater than 0 bound
+            origin.add(new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
         }
-        return null;
+        return origin;
     }
 
     private void findVerticesForClocks(Map<Clock, Constraint> chosenConstraints,

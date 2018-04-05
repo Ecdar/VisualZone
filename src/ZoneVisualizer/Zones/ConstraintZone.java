@@ -9,8 +9,8 @@ public class ConstraintZone {
 
     private final Map<Clock, SingleClockConstraint> minBoundConstraints = new HashMap<>();
     private final Map<Clock, SingleClockConstraint> maxBoundConstraints = new HashMap<>();
-    private final Map<Clock, TwoClockConstraint> twoClockConstraints = new HashMap<>();
-    private final Map<Clock, TwoClockConstraint> twoClockConstraintsBySecondary = new HashMap<>();
+    private final Map<Clock, Map<Clock, TwoClockConstraint>> twoClockConstraints = new HashMap<>();
+    private final Map<Clock, Map<Clock, TwoClockConstraint>> twoClockConstraintsBySecondary = new HashMap<>();
     private boolean restrictedToEmptiness = false;
 
     public ConstraintZone(Collection<Constraint> constraints) {
@@ -25,7 +25,13 @@ public class ConstraintZone {
 
         checkTwoClockAgainstOneClock();
         twoClockConstraintsBySecondary.putAll(twoClockConstraints.values().stream()
-                .collect(Collectors.toMap(tcc -> tcc.getClock2(), tcc -> tcc)));
+                .flatMap(map -> map.values().stream())
+                .collect(Collectors.groupingBy((TwoClockConstraint tcc) -> tcc.getClock2()))
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        kvp -> kvp.getKey(),
+                        kvp -> kvp.getValue().stream()
+                                .collect(Collectors.toMap(tcc -> tcc.getClock1(), tcc -> tcc)))));
     }
 
     private boolean addSingleClockConstraint(SingleClockConstraint constraint) {
@@ -51,7 +57,7 @@ public class ConstraintZone {
         if (tcConstraint.getInequality() == Inequality.GreaterThan) {
             tcConstraint = tcConstraint.getInvertedConstraint();
         }
-        if (checkEmptiness(tcConstraint, twoClockConstraints.get(tcConstraint.getClock2()))) {
+        if (checkEmptiness(tcConstraint)) {
             restrictedToEmptiness = true;
             return true;
         }
@@ -60,7 +66,7 @@ public class ConstraintZone {
     }
 
     private void checkTwoClockAgainstOneClock() {
-        Collection<TwoClockConstraint> tempTCConstraints = new ArrayList<>(twoClockConstraints.values());
+        Collection<TwoClockConstraint> tempTCConstraints = getTCConstraints();
         for (TwoClockConstraint tcConstraint : tempTCConstraints) {
             //Remember all of these can be null!
             SingleClockConstraint
@@ -142,10 +148,15 @@ public class ConstraintZone {
     //Adds the given constraint to list of two clock bounds if there isn't one or
     //if it is more restrictive than the old bound
     private void tryAddTwoClockBound(TwoClockConstraint constraint) {
-        TwoClockConstraint old = twoClockConstraints.get(constraint.getClock1());
+        Map<Clock, TwoClockConstraint> mapByFirstClock = twoClockConstraints.get(constraint.getClock1());
+        if (mapByFirstClock == null) {
+            mapByFirstClock = new HashMap<>();
+            twoClockConstraints.put(constraint.getClock1(), mapByFirstClock);
+        }
+        TwoClockConstraint old = mapByFirstClock.get(constraint.getClock2());
         if (old == null || constraint.getnValue() < old.getnValue() ||
                 (constraint.getnValue() == old.getnValue() && !constraint.isInclusive())) {
-            twoClockConstraints.put(constraint.getClock1(), constraint);
+            mapByFirstClock.put(constraint.getClock2(), constraint);
         }
     }
 
@@ -167,7 +178,12 @@ public class ConstraintZone {
     }
 
     //Returns true if the given constraints with the same 2 clocksAsCollection restricts us to the empty space
-    private boolean checkEmptiness(TwoClockConstraint c1, TwoClockConstraint c2) {
+    private boolean checkEmptiness(TwoClockConstraint c1) {
+        Map<Clock, TwoClockConstraint> opposites = twoClockConstraints.get(c1.getClock2());
+        if (opposites == null) {
+            return false;
+        }
+        TwoClockConstraint c2 = opposites.get(c1.getClock1());
         if (c1 == null || c2 == null) {
             return false;
         }
@@ -221,12 +237,28 @@ public class ConstraintZone {
         return maxBoundConstraints.get(key);
     }
 
-    public TwoClockConstraint getTCConstraint(Clock key) {
-        return twoClockConstraints.get(key);
+    public TwoClockConstraint getTCConstraint(Clock key1, Clock key2) {
+        Map<Clock, TwoClockConstraint> mapByFirstClock = twoClockConstraints.get(key1);
+        if (mapByFirstClock == null) {
+            return null;
+        }
+        return mapByFirstClock.get(key2);
     }
 
-    public TwoClockConstraint getTCConstraintBySecondary(Clock key) {
-        return twoClockConstraintsBySecondary.get(key);
+    public Collection<TwoClockConstraint> getTCConstraintByPrimary(Clock key) {
+        Map<Clock, TwoClockConstraint> mapBySecondClock = twoClockConstraints.get(key);
+        if (mapBySecondClock == null) {
+            return new ArrayList<>();
+        }
+        return mapBySecondClock.values();
+    }
+
+    public Collection<TwoClockConstraint> getTCConstraintBySecondary(Clock key) {
+        Map<Clock, TwoClockConstraint> mapBySecondClock = twoClockConstraintsBySecondary.get(key);
+        if (mapBySecondClock == null) {
+            return new ArrayList<>();
+        }
+        return mapBySecondClock.values();
     }
 
     public Collection<SingleClockConstraint> getMinConstraints() {
@@ -238,6 +270,8 @@ public class ConstraintZone {
     }
 
     public Collection<TwoClockConstraint> getTCConstraints() {
-        return twoClockConstraints.values();
+        return twoClockConstraints.values().stream()
+                .flatMap(map -> map.values().stream())
+                .collect(Collectors.toList());
     }
 }
