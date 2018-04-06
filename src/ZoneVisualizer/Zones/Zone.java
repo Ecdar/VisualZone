@@ -3,8 +3,6 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
-import ZoneVisualizer.Utility.LINQ;
-import com.sun.deploy.util.ArrayUtil;
 
 import java.util.*;
 import java.util.function.Function;
@@ -26,13 +24,30 @@ public class Zone {
         Set<Constraint> origin = findOrigin(constraintZone, clocks);
 
         List<Set<Constraint>> foundVertices = new ArrayList<>();
-        TreeMap<Set<Constraint>, Constraint> verticesWithNewestConstraint = new TreeMap<>();
-        verticesWithNewestConstraint.put(origin, null);
+        TreeMap<Set<Constraint>, Set<Constraint>> verticesWithAccessEdge = new TreeMap<>();
+        verticesWithAccessEdge.put(origin, null);
         foundVertices.add(origin);
 
-        while (!verticesWithNewestConstraint.isEmpty()) {
-            Map.Entry<Set<Constraint>, Constraint> vertexToExpandFrom = verticesWithNewestConstraint.firstEntry();
-            for (Constraint c : new ArrayList<>(vertexToExpandFrom.getKey())) {
+        while (!verticesWithAccessEdge.isEmpty()) {
+            Map.Entry<Set<Constraint>, Set<Constraint>> vertexToExpandFrom = verticesWithAccessEdge.firstEntry();
+
+            Set<List<Constraint>> constraintPermutations = new HashSet<>();
+            findPermutations(clocks.size() - 1, new ArrayList<>(),
+                    vertexToExpandFrom.getKey(), constraintPermutations);
+
+            for (List<Constraint> edge : constraintPermutations) {
+                if (edge.containsAll(vertexToExpandFrom.getValue())) {
+                    continue;
+                }
+                //Todo check that constraint normals are linearly independent
+
+                //Todo find constraint(s) to add to edge to get next vertex
+
+                //Todo add new vertex
+            }
+
+            //Old method. To be removed
+            for (Constraint c : constraintsOfVertex) {
                 if (c == vertexToExpandFrom.getValue()) {
                     continue;
                 }
@@ -50,12 +65,12 @@ public class Zone {
 
                 if (!foundVertices.contains(nextVertex)) {
                     foundVertices.add(nextVertex);
-                    verticesWithNewestConstraint.put(nextVertex, replacingConstraint);
+                    verticesWithAccessEdge.put(nextVertex, replacingConstraint);
                 }
             }
 
 
-            verticesWithNewestConstraint.remove(vertexToExpandFrom.getKey());
+            verticesWithAccessEdge.remove(vertexToExpandFrom.getKey());
         }
 
 
@@ -93,6 +108,21 @@ public class Zone {
             origin.add(new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
         }
         return origin;
+    }
+
+    private void findPermutations(int permutationLength, List<Constraint> permutation, Set<Constraint> rest, Set<List<Constraint>> out) {
+        if (permutation.size() == permutationLength) {
+            out.add(permutation);
+        }
+        else {
+            for (Constraint c : rest) {
+                List<Constraint> nextPermutation = new ArrayList<>(permutation);
+                nextPermutation.add(c);
+                Set<Constraint> remainder = new HashSet<>(rest);
+                remainder.remove(c);
+                findPermutations(permutationLength, nextPermutation, remainder, out);
+            }
+        }
     }
 
     private void findVerticesForClocks(Map<Clock, Constraint> chosenConstraints,
