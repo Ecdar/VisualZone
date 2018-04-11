@@ -21,8 +21,11 @@ public class Zone {
             return;
         }
 
-        Set<Constraint> origin = findOrigin(constraintZone, clocks);
+        Vertex origin = findOrigin(constraintZone, clocks);
 
+
+
+        //Old implementation. Should do this but with Vertex class
         List<Set<Constraint>> foundVertices = new ArrayList<>();
         TreeMap<Set<Constraint>, Set<Constraint>> verticesWithAccessEdge = new TreeMap<>();
         verticesWithAccessEdge.put(origin, null);
@@ -82,13 +85,13 @@ public class Zone {
         findVerticesForClocks(chosenConstraints, tempClocks, constraintZone);
     }
 
-    private Set<Constraint> findOrigin(ConstraintZone constraintZone, Collection<Clock> clocks) {
-        Set<Constraint> origin = new HashSet<>();
+    private Vertex findOrigin(ConstraintZone constraintZone, Collection<Clock> clocks) {
+        Vertex origin = new Vertex(clocks);
         for (Clock clock : clocks) {
             Constraint c = constraintZone.getMinConstraint(clock);
             if (c != null) {
                 //Simple case; a greater than constraint exists for this dimension
-                origin.add(c);
+                origin.addConstraint(clock, c);
                 continue;
             }
             Collection<TwoClockConstraint> twoClockMaxConstraints = constraintZone.getTCConstraintBySecondary(clock);
@@ -98,14 +101,14 @@ public class Zone {
                 double originNValue = twoClockMaxConstraints.stream()
                         .map(Constraint::getnValue)
                         .min(Double::compareTo).get();
-                List<TwoClockConstraint> maximizedMinBounds = twoClockMaxConstraints.stream()
+                Collection<Constraint> maximizedMinBounds = twoClockMaxConstraints.stream()
                         .filter(tcc -> tcc.getnValue() == originNValue)
                         .collect(Collectors.toList());
-                origin.addAll(maximizedMinBounds);
+                origin.addConstraints(clock, maximizedMinBounds);
                 continue;
             }
             //No bounds on this dimension. Add an implicit greater than 0 bound
-            origin.add(new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
+            origin.addConstraint(clock, new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
         }
         return origin;
     }
