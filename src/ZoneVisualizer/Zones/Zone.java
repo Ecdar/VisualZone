@@ -22,15 +22,51 @@ public class Zone {
         }
 
         Vertex origin = findOrigin(constraintZone, clocks);
+        Set<Vertex> foundVertices = new HashSet<>();
+        TreeMap<Vertex, Clock> verticesLastPivot = new TreeMap<>(new Vertex.VertexComparator(clocks));
+        foundVertices.add(origin);
+        verticesLastPivot.put(origin, null);
+
+        while (!verticesLastPivot.isEmpty()) {
+            Vertex pivot = verticesLastPivot.firstEntry().getKey();
+            Clock oldPivotDimension = verticesLastPivot.firstEntry().getValue();
+            verticesLastPivot.remove(pivot);
+
+            for (Clock clock : clocks) {
+                if (clock == oldPivotDimension) {
+                    continue;
+                }
+                PivotResult pivotResult = pivot.pivot(clock);
+                if (pivotResult == null) {
+                    continue;
+                }
+                Collection<TwoClockConstraint> twoClockConstraints =
+                        constraintZone.getTCConstraintByPrimary(pivotResult.getMissingDimension());
+                if (twoClockConstraints.isEmpty()) {
+                    //Todo find singleclock constraints (or create infinity constraint)
+                }
+                else {
+                    //Todo Remove constraints that are not applicable (already used in vertex, or nvalue lower than previous etc)
+
+                    Double minN = twoClockConstraints.stream()
+                            .map(TwoClockConstraint::getnValue)
+                            .min(Double::compareTo)
+                            .get();
+                    Collection<Constraint> minMaxConstraints = twoClockConstraints.stream()
+                            .filter(c -> c.getnValue() == minN).collect(Collectors.toList());
+                    pivotResult.addMissingConstraints(minMaxConstraints);
+                }
+
+                if (!foundVertices.contains(pivotResult.getVertex())) {
+                    foundVertices.add(pivotResult.getVertex());
+                    verticesLastPivot.put(pivotResult.getVertex(), pivotResult.getMissingDimension());
+                }
+            }
+        }
 
 
 
         //Old implementation. Should do this but with Vertex class
-        List<Set<Constraint>> foundVertices = new ArrayList<>();
-        TreeMap<Set<Constraint>, Set<Constraint>> verticesWithAccessEdge = new TreeMap<>();
-        verticesWithAccessEdge.put(origin, null);
-        foundVertices.add(origin);
-
         while (!verticesWithAccessEdge.isEmpty()) {
             Map.Entry<Set<Constraint>, Set<Constraint>> vertexToExpandFrom = verticesWithAccessEdge.firstEntry();
 
