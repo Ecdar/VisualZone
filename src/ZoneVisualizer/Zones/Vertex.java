@@ -57,6 +57,12 @@ public class Vertex {
         return constraints.get(key);
     }
 
+    public Set<Constraint> getAllConstraints() {
+        return constraints.values().stream()
+                .flatMap(col -> col.stream())
+                .collect(Collectors.toSet());
+    }
+
     public void addConstraint(Clock key, Constraint value) {
         constraints.get(key).add(value);
     }
@@ -114,9 +120,7 @@ public class Vertex {
 
     @Override
     public int hashCode() {
-        Set<Constraint> constraintSet = constraints.values().stream()
-                .flatMap(col -> col.stream())
-                .collect(Collectors.toSet());
+        Set<Constraint> constraintSet = getAllConstraints();
         return constraintSet.hashCode();
     }
 

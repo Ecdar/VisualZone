@@ -234,6 +234,9 @@ public class ConstraintZone {
     }
 
     public SingleClockConstraint getMaxConstraint(Clock key) {
+        if (!maxBoundConstraints.containsKey(key)) {
+            maxBoundConstraints.put(key, new SingleClockConstraint(Inequality.LessThan, true, Double.POSITIVE_INFINITY, key));
+        }
         return maxBoundConstraints.get(key);
     }
 

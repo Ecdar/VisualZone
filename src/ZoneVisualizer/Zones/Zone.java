@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class Zone {
 
-    protected List<Map<Clock, Double>> vertices;
+    protected final List<Vertex> vertices;
     protected Map<Constraint, Face> faces;
 
     public Zone(Collection<Constraint> constraints, Collection<Clock> clocks) {
@@ -22,9 +22,8 @@ public class Zone {
         }
 
         Vertex origin = findOrigin(constraintZone, clocks);
-        Set<Vertex> foundVertices = new HashSet<>();
         TreeMap<Vertex, Clock> verticesLastPivot = new TreeMap<>(new Vertex.VertexComparator(clocks));
-        foundVertices.add(origin);
+        vertices.add(origin);
         verticesLastPivot.put(origin, null);
 
         while (!verticesLastPivot.isEmpty()) {
@@ -33,92 +32,45 @@ public class Zone {
             verticesLastPivot.remove(pivot);
 
             for (Clock clock : clocks) {
-                if (clock == oldPivotDimension) {
-                    continue;
-                }
-                PivotResult pivotResult = pivot.pivot(clock);
-                if (pivotResult == null) {
-                    continue;
-                }
-                Collection<TwoClockConstraint> twoClockConstraints =
-                        constraintZone.getTCConstraintByPrimary(pivotResult.getMissingDimension());
-                if (twoClockConstraints.isEmpty()) {
-                    //Todo find singleclock constraints (or create infinity constraint)
-                }
-                else {
-                    //Todo Remove constraints that are not applicable (already used in vertex, or nvalue lower than previous etc)
-
-                    Double minN = twoClockConstraints.stream()
-                            .map(TwoClockConstraint::getnValue)
-                            .min(Double::compareTo)
-                            .get();
-                    Collection<Constraint> minMaxConstraints = twoClockConstraints.stream()
-                            .filter(c -> c.getnValue() == minN).collect(Collectors.toList());
-                    pivotResult.addMissingConstraints(minMaxConstraints);
-                }
-
-                if (!foundVertices.contains(pivotResult.getVertex())) {
-                    foundVertices.add(pivotResult.getVertex());
-                    verticesLastPivot.put(pivotResult.getVertex(), pivotResult.getMissingDimension());
-                }
+                pivotOnClock(constraintZone, pivot, oldPivotDimension, clock, verticesLastPivot);
             }
         }
+    }
 
+    private void pivotOnClock(ConstraintZone constraintZone, Vertex pivot, Clock oldPivotDimension,
+                              Clock pivotDimension, TreeMap<Vertex, Clock> verticesLastPivot) {
+        if (pivotDimension == oldPivotDimension) {
+            return;
+        }
+        PivotResult pivotResult = pivot.pivot(pivotDimension);
+        if (pivotResult == null) {
+            return;
+        }
+        Collection<TwoClockConstraint> twoClockConstraints =
+                constraintZone.getTCConstraintByPrimary(pivotResult.getMissingDimension());
+        if (twoClockConstraints.isEmpty()) {
+            pivotResult.addMissingConstraints(Arrays.asList(constraintZone.getMaxConstraint(pivotResult.getMissingDimension())));
+        }
+        else {
+            //Todo Remove constraints that are not applicable (already used in vertex, or nvalue lower than previous etc)
 
-
-        //Old implementation. Should do this but with Vertex class
-        while (!verticesWithAccessEdge.isEmpty()) {
-            Map.Entry<Set<Constraint>, Set<Constraint>> vertexToExpandFrom = verticesWithAccessEdge.firstEntry();
-
-            Set<List<Constraint>> constraintPermutations = new HashSet<>();
-            findPermutations(clocks.size() - 1, new ArrayList<>(),
-                    vertexToExpandFrom.getKey(), constraintPermutations);
-
-            for (List<Constraint> edge : constraintPermutations) {
-                if (edge.containsAll(vertexToExpandFrom.getValue())) {
-                    continue;
-                }
-                //Todo check that constraint normals are linearly independent
-
-                //Todo find constraint(s) to add to edge to get next vertex
-
-                //Todo add new vertex
-            }
-
-            //Old method. To be removed
-            for (Constraint c : constraintsOfVertex) {
-                if (c == vertexToExpandFrom.getValue()) {
-                    continue;
-                }
-                if (clocks.stream().noneMatch(clock -> c.getNormalComponent(clock) > 0)) {
-                    continue;
-                }
-                Set<Constraint> nextVertex = new HashSet<>(vertexToExpandFrom.getKey());
-                nextVertex.remove(c);
-                if (nextVertex.size() > clocks.size() - 1) {
-                    //Degenerate vertex
-                }
-
-                Constraint replacingConstraint = null;
-                //Todo find constraint to replace c with
-
-                if (!foundVertices.contains(nextVertex)) {
-                    foundVertices.add(nextVertex);
-                    verticesWithAccessEdge.put(nextVertex, replacingConstraint);
-                }
-            }
-
-
-            verticesWithAccessEdge.remove(vertexToExpandFrom.getKey());
+            Double minN = twoClockConstraints.stream()
+                    .map(TwoClockConstraint::getnValue)
+                    .min(Double::compareTo)
+                    .get();
+            Collection<Constraint> minMaxConstraints = twoClockConstraints.stream()
+                    .filter(c -> c.getnValue() == minN).collect(Collectors.toList());
+            pivotResult.addMissingConstraints(minMaxConstraints);
         }
 
-
-
-
-        //Old method (doesn't handle two clock constraints)
-        List<Clock> tempClocks = new ArrayList<>(clocks);
-        Map<Clock, Constraint> chosenConstraints = new HashMap<>();
-        findVerticesForClocks(chosenConstraints, tempClocks, constraintZone);
+        if (!vertices.contains(pivotResult.getVertex())) {
+            vertices.add(pivotResult.getVertex());
+            verticesLastPivot.put(pivotResult.getVertex(), pivotResult.getMissingDimension());
+            int index = vertices.size() - 1;
+            for (Constraint constraint : pivotResult.getVertex().getAllConstraints()) {
+                addVertexToFace(index, constraint);
+            }
+        }
     }
 
     private Vertex findOrigin(ConstraintZone constraintZone, Collection<Clock> clocks) {
@@ -149,87 +101,6 @@ public class Zone {
         return origin;
     }
 
-    private void findPermutations(int permutationLength, List<Constraint> permutation, Set<Constraint> rest, Set<List<Constraint>> out) {
-        if (permutation.size() == permutationLength) {
-            out.add(permutation);
-        }
-        else {
-            for (Constraint c : rest) {
-                List<Constraint> nextPermutation = new ArrayList<>(permutation);
-                nextPermutation.add(c);
-                Set<Constraint> remainder = new HashSet<>(rest);
-                remainder.remove(c);
-                findPermutations(permutationLength, nextPermutation, remainder, out);
-            }
-        }
-    }
-
-    private void findVerticesForClocks(Map<Clock, Constraint> chosenConstraints,
-                                       List<Clock> remainingClocks, ConstraintZone constraintZone) {
-        if (remainingClocks.isEmpty()) {
-            addVertex(chosenConstraints);
-            return;
-        }
-        Clock clock = remainingClocks.get(0);
-        remainingClocks.remove(clock);
-
-        Constraint chosenConstraint;
-        TwoClockConstraint tcConstraint;
-
-        //Handle right and bottom sides of rectangle
-        tcConstraint = constraintZone.getTCConstraint(clock);
-        if (tcConstraint == null ||
-                (tcConstraint.getRestrictionType() != TwoClockRestrictionType.CutOfBottomAndRightSide
-                && tcConstraint.getRestrictionType() != TwoClockRestrictionType.CutOfRightSide)) {
-            //Right flat side
-            chosenConstraint = constraintZone.getMaxConstraint(clock);
-            if (chosenConstraint == null) {
-                chosenConstraint = new SingleClockConstraint
-                        (Inequality.LessThan, false, Double.POSITIVE_INFINITY, clock);
-            }
-            chosenConstraints.put(clock, chosenConstraint);
-            findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
-        }
-        if (tcConstraint != null &&
-                (tcConstraint.getRestrictionType() == TwoClockRestrictionType.CutOfBottomAndRightSide
-                || tcConstraint.getRestrictionType() == TwoClockRestrictionType.CutOfRightSide
-                || tcConstraint.getRestrictionType() == TwoClockRestrictionType.CutOfNothing)) {
-            //Right/bottom slanted line crosses either top or bottom side (or both)
-            chosenConstraints.put(clock, tcConstraint);
-            findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
-        }
-
-        //Handle left and top of rectangle
-        tcConstraint = constraintZone.getTCConstraintBySecondary(clock);
-        if (tcConstraint == null ||
-                (tcConstraint.getRestrictionType() != TwoClockRestrictionType.CutOfBottomAndRightSide
-                && tcConstraint.getRestrictionType() != TwoClockRestrictionType.CutOfBottom)) {
-            //Left flat side
-            chosenConstraint = constraintZone.getMinConstraint(clock);
-            if (chosenConstraint == null) {
-                chosenConstraint = new SingleClockConstraint
-                        (Inequality.GreaterThan, false, 0, clock);
-            }
-            chosenConstraints.put(clock, chosenConstraint);
-            findVerticesForClocks(chosenConstraints, remainingClocks, constraintZone);
-        }
-        //todo handle left/top slanted line across top or bottom (or both)
-
-        remainingClocks.add(clock);
-    }
-
-    private void addVertex(Map<Clock, Constraint> constraintMap) {
-        Map<Clock, Double> vertex = new HashMap<>();
-        for (Map.Entry<Clock, Constraint> constraintEntry : constraintMap.entrySet()){
-            vertex.put(constraintEntry.getKey(), constraintEntry.getValue().getnValue());
-        }
-        vertices.add(vertex);
-        int index = vertices.size() - 1;
-        for (Constraint constraint : constraintMap.values()) {
-            addVertexToFace(index, constraint);
-        }
-    }
-
     private void addVertexToFace(int vertexIndex, Constraint constraint) {
         if (!faces.containsKey(constraint)) {
             faces.put(constraint, new Face(constraint));
@@ -240,8 +111,8 @@ public class Zone {
     public WorldPolygon projectTo2DMesh(Clock dimension1, Clock dimension2) {
         List<Vector3> projectedVertices = new ArrayList<>();
 
-        for (Map<Clock, Double> vertex : vertices) {
-            Vector3 projectedVertex = new Vector3(vertex.get(dimension1), vertex.get(dimension2), 0);
+        for (Vertex vertex : vertices) {
+            Vector3 projectedVertex = new Vector3(vertex.getCoordinate(dimension1), vertex.getCoordinate(dimension2), 0);
             if (!projectedVertices.contains(projectedVertex)) {
                 projectedVertices.add(projectedVertex);
             }
@@ -255,8 +126,9 @@ public class Zone {
         List<WorldPolygon> projectedPolygons = new ArrayList<>();
         List<Vector3> projectedVertices = new ArrayList<>();
 
-        for (Map<Clock, Double> vertex : vertices) {
-            Vector3 projectedVertex = new Vector3(vertex.get(dimension1), vertex.get(dimension2), vertex.get(dimension3));
+        for (Vertex vertex : vertices) {
+            Vector3 projectedVertex = new Vector3(vertex.getCoordinate(dimension1),
+                    vertex.getCoordinate(dimension2), vertex.getCoordinate(dimension3));
             if (!projectedVertices.contains(projectedVertex)) {
                 projectedVertices.add(projectedVertex);
             }
@@ -379,7 +251,7 @@ public class Zone {
         public WorldPolygon project(Clock dimension1, Clock dimension2, Clock dimension3) {
             List<Vector3> projectedVertices = verticeIndices.stream()
                     .map(i -> vertices.get(i))
-                    .map(v -> new Vector3(v.get(dimension1), v.get(dimension2), v.get(dimension3)))
+                    .map(v -> new Vector3(v.getCoordinate(dimension1), v.getCoordinate(dimension2), v.getCoordinate(dimension3)))
                     .collect(Collectors.toList());
             Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
 
