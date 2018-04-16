@@ -39,12 +39,12 @@ public class CheatPanel extends GridPane {
                 new SingleClockConstraint(Inequality.LessThan, true, 12, clockDimensions.get(0)),
                 new SingleClockConstraint(Inequality.GreaterThan, false, 1, clockDimensions.get(1)),
                 new SingleClockConstraint(Inequality.LessThan, false, 10, clockDimensions.get(1)),
-                new SingleClockConstraint(Inequality.GreaterThan, true, 5, clockDimensions.get(3)),
-                new SingleClockConstraint(Inequality.LessThan, false, 15, clockDimensions.get(3)),
+                new SingleClockConstraint(Inequality.GreaterThan, true, 5, clockDimensions.get(2)),
+                new SingleClockConstraint(Inequality.LessThan, false, 15, clockDimensions.get(2)),
                 new TwoClockConstraint(Inequality.GreaterThan, false, -6, clockDimensions.get(1), clockDimensions.get(0)),
                 new TwoClockConstraint(Inequality.LessThan, true, 6, clockDimensions.get(1), clockDimensions.get(0)),
-                new TwoClockConstraint(Inequality.LessThan, true, 4, clockDimensions.get(1), clockDimensions.get(3)),
-                new TwoClockConstraint(Inequality.GreaterThan, false, -7, clockDimensions.get(3), clockDimensions.get(0))
+                new TwoClockConstraint(Inequality.LessThan, true, 4, clockDimensions.get(1), clockDimensions.get(2)),
+                new TwoClockConstraint(Inequality.GreaterThan, false, -7, clockDimensions.get(2), clockDimensions.get(0))
         );
         constraintCheckBoxes = constraints.stream().map(c -> new CheckBox(c.toString())).collect(Collectors.toList());
         constraintCheckBoxes.forEach(cb -> cb.setSelected(true));

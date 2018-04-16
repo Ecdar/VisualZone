@@ -3,14 +3,12 @@ package ZoneVisualizer.Constraints;
 import ZoneVisualizer.GraphicalElements.Vector3;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 public abstract class Constraint {
 
-    protected Inequality inequality;
-    protected boolean inclusive;
-    protected double nValue;
+    protected final Inequality inequality;
+    protected final boolean inclusive;
+    protected final double nValue;
 
     public Constraint(Inequality inequality, boolean inclusive, double nValue) {
         this.inequality = inequality;

@@ -2,6 +2,7 @@ package ZoneVisualizer.Utility;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 public class LINQ {
 
@@ -28,5 +29,13 @@ public class LINQ {
             }
         }
         return false;
+    }
+
+    public static <T> T first(Collection<T> collection) {
+        Iterator<T> iterator = collection.iterator();
+        if (iterator.hasNext()) {
+            return iterator.next();
+        }
+        return null;
     }
 }

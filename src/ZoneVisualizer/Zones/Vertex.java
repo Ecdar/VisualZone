@@ -1,6 +1,7 @@
 package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.*;
+import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,7 +17,7 @@ public class Vertex {
     }
 
     public PivotResult pivot(Clock clock) {
-        Constraint removingConstraint = first(constraints.get(clock));
+        Constraint removingConstraint = LINQ.first(constraints.get(clock));
         if ((removingConstraint instanceof SingleClockConstraint &&
              removingConstraint.getInequality() == Inequality.LessThan) ||
             (removingConstraint instanceof TwoClockConstraint &&
@@ -26,13 +27,14 @@ public class Vertex {
         }
 
         Vertex newVertex = new Vertex(constraints.keySet());
-        Clock missingDimension = clock;
+        boolean changedDimension = false;
+        Collection<Clock> missingDimensions = new ArrayList<>();
         for (Map.Entry<Clock, Collection<Constraint>> entry : constraints.entrySet()) {
             if (entry.getKey() == clock) {
                 continue;
             }
             if (entry.getValue().size() == 1) {
-                Constraint c = first(entry.getValue());
+                Constraint c = LINQ.first(entry.getValue());
                 if (c instanceof SingleClockConstraint) {
                     newVertex.addConstraint(entry.getKey(), c);
                     continue;
@@ -40,7 +42,10 @@ public class Vertex {
                 TwoClockConstraint tcc = (TwoClockConstraint)c;
                 if (tcc.getClock2() == clock) {
                     newVertex.addConstraint(clock, tcc);
-                    missingDimension = tcc.getClock1();
+                    changedDimension = true;
+                    missingDimensions.add(tcc.getClock1());
+                    //Todo this reversion isn't always correct
+                    //(if there are several tcc with clock2 == clock and resulting vertex isn't degenerate)
                 }
                 else {
                     newVertex.addConstraint(entry.getKey(), tcc);
@@ -49,8 +54,11 @@ public class Vertex {
             }
             //Todo handle degenerate case
         }
+        if (!changedDimension) {
+            missingDimensions.add(clock);
+        }
 
-        return new PivotResult(newVertex, missingDimension);
+        return new PivotResult(newVertex, missingDimensions);
     }
 
     public Collection<Constraint> getConstraints(Clock key) {
@@ -65,13 +73,16 @@ public class Vertex {
 
     public void addConstraint(Clock key, Constraint value) {
         constraints.get(key).add(value);
+        if (constraints.get(key).size() > 1) {
+            degenerate = true;
+        }
     }
 
     public void addConstraints(Clock key, Collection<Constraint> values) {
-        if (values.size() > 1) {
+        constraints.get(key).addAll(values);
+        if (constraints.get(key).size() > 1) {
             degenerate = true;
         }
-        constraints.get(key).addAll(values);
     }
 
     public boolean isDegenerate() {
@@ -86,7 +97,7 @@ public class Vertex {
     }
 
     private double calculateCoordinate(Clock dimension) {
-        Constraint constraint = first(constraints.get(dimension));
+        Constraint constraint = LINQ.first(constraints.get(dimension));
         if (constraint instanceof SingleClockConstraint) {
             return constraint.getnValue();
         }
@@ -124,14 +135,6 @@ public class Vertex {
         return constraintSet.hashCode();
     }
 
-    private static <T> T first(Collection<T> collection) {
-        Iterator<T> iterator = collection.iterator();
-        if (iterator.hasNext()) {
-            return iterator.next();
-        }
-        return null;
-    }
-
     public static class VertexComparator implements Comparator<Vertex> {
 
         private final List<Clock> dimensionOrder;
@@ -152,8 +155,8 @@ public class Vertex {
                 return 1;
             }
             for (Clock clock : dimensionOrder) {
-                Constraint c1 = first(o1.getConstraints(clock));
-                Constraint c2 = first(o2.getConstraints(clock));
+                Constraint c1 = LINQ.first(o1.getConstraints(clock));
+                Constraint c2 = LINQ.first(o2.getConstraints(clock));
                 if (c1 == null) {
                     if (c2 == null) {
                         return 0;

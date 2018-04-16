@@ -3,6 +3,7 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
+import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
 import java.util.function.Function;
@@ -22,50 +23,49 @@ public class Zone {
         }
 
         Vertex origin = findOrigin(constraintZone, clocks);
-        TreeMap<Vertex, Clock> verticesLastPivot = new TreeMap<>(new Vertex.VertexComparator(clocks));
         vertices.add(origin);
-        verticesLastPivot.put(origin, null);
 
-        while (!verticesLastPivot.isEmpty()) {
-            Vertex pivot = verticesLastPivot.firstEntry().getKey();
-            Clock oldPivotDimension = verticesLastPivot.firstEntry().getValue();
-            verticesLastPivot.remove(pivot);
+        for (int i = 0; i < vertices.size(); i++) {
+            Vertex pivot = vertices.get(i);
 
             for (Clock clock : clocks) {
-                pivotOnClock(constraintZone, pivot, oldPivotDimension, clock, verticesLastPivot);
+                PivotResult pivotResult = pivot.pivot(clock);
+                findMissingConstraintsAfterPivot(constraintZone, pivot, pivotResult);
+            }
+            if (pivot.isDegenerate()) {
+                //Todo pivot along extra edges in degenerate case
             }
         }
     }
 
-    private void pivotOnClock(ConstraintZone constraintZone, Vertex pivot, Clock oldPivotDimension,
-                              Clock pivotDimension, TreeMap<Vertex, Clock> verticesLastPivot) {
-        if (pivotDimension == oldPivotDimension) {
-            return;
-        }
-        PivotResult pivotResult = pivot.pivot(pivotDimension);
+    private void findMissingConstraintsAfterPivot(ConstraintZone constraintZone, Vertex pivot, PivotResult pivotResult) {
         if (pivotResult == null) {
             return;
         }
-        Collection<TwoClockConstraint> twoClockConstraints =
-                constraintZone.getTCConstraintByPrimary(pivotResult.getMissingDimension());
-        if (twoClockConstraints.isEmpty()) {
-            pivotResult.addMissingConstraints(Arrays.asList(constraintZone.getMaxConstraint(pivotResult.getMissingDimension())));
-        }
-        else {
-            //Todo Remove constraints that are not applicable (already used in vertex, or nvalue lower than previous etc)
-
+        for (Clock missingDimension : pivotResult.getMissingDimensions()) {
+            Collection<TwoClockConstraint> twoClockConstraints =
+                    constraintZone.getTCConstraintByPrimary(missingDimension);
+            Constraint oldConstraint = LINQ.first(pivot.getConstraints(missingDimension));
+            if (oldConstraint instanceof TwoClockConstraint) {
+                //Remove constraints that won't maximize dimension
+                TwoClockConstraint oldTcc = (TwoClockConstraint)oldConstraint;
+                twoClockConstraints.removeIf(tcc -> tcc.getnValue() <= oldTcc.getnValue());
+            }
+            if (twoClockConstraints.isEmpty()) {
+                pivotResult.addMissingConstraint(missingDimension, constraintZone.getMaxConstraint(missingDimension));
+                continue;
+            }
             Double minN = twoClockConstraints.stream()
                     .map(TwoClockConstraint::getnValue)
                     .min(Double::compareTo)
                     .get();
             Collection<Constraint> minMaxConstraints = twoClockConstraints.stream()
                     .filter(c -> c.getnValue() == minN).collect(Collectors.toList());
-            pivotResult.addMissingConstraints(minMaxConstraints);
+            pivotResult.addMissingConstraints(missingDimension, minMaxConstraints);
         }
 
         if (!vertices.contains(pivotResult.getVertex())) {
             vertices.add(pivotResult.getVertex());
-            verticesLastPivot.put(pivotResult.getVertex(), pivotResult.getMissingDimension());
             int index = vertices.size() - 1;
             for (Constraint constraint : pivotResult.getVertex().getAllConstraints()) {
                 addVertexToFace(index, constraint);
@@ -75,13 +75,18 @@ public class Zone {
 
     private Vertex findOrigin(ConstraintZone constraintZone, Collection<Clock> clocks) {
         Vertex origin = new Vertex(clocks);
+        Collection<Clock> delayedDimensions = new ArrayList<>();
         for (Clock clock : clocks) {
             Constraint c = constraintZone.getMinConstraint(clock);
             if (c != null) {
                 //Simple case; a greater than constraint exists for this dimension
                 origin.addConstraint(clock, c);
-                continue;
             }
+            else {
+                delayedDimensions.add(clock);
+            }
+        }
+        for (Clock clock : delayedDimensions) {
             Collection<TwoClockConstraint> twoClockMaxConstraints = constraintZone.getTCConstraintBySecondary(clock);
             if (!twoClockMaxConstraints.isEmpty()) {
                 //There exists one or more two clock constraints bounding the minimum value of this dimension
@@ -92,8 +97,15 @@ public class Zone {
                 Collection<Constraint> maximizedMinBounds = twoClockMaxConstraints.stream()
                         .filter(tcc -> tcc.getnValue() == originNValue)
                         .collect(Collectors.toList());
-                origin.addConstraints(clock, maximizedMinBounds);
-                continue;
+                TwoClockConstraint tcc = (TwoClockConstraint)LINQ.first(maximizedMinBounds);
+                double otherDimValue = 0;
+                if (!delayedDimensions.contains(tcc.getClock1())) {
+                    otherDimValue = origin.getCoordinate(tcc.getClock1());
+                }
+                if (tcc.getnValue() <= otherDimValue) {
+                    origin.addConstraints(clock, maximizedMinBounds);
+                    continue;
+                }
             }
             //No bounds on this dimension. Add an implicit greater than 0 bound
             origin.addConstraint(clock, new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));

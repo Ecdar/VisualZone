@@ -8,22 +8,26 @@ import java.util.Collection;
 public class PivotResult {
 
     private Vertex vertex;
-    private Clock missingDimension;
+    private Collection<Clock> missingDimensions;
 
-    public PivotResult(Vertex vertex, Clock missingDimension) {
+    public PivotResult(Vertex vertex, Collection<Clock> missingDimensions) {
         this.vertex = vertex;
-        this.missingDimension = missingDimension;
+        this.missingDimensions = missingDimensions;
     }
 
-    public void addMissingConstraints(Collection<Constraint> constraints) {
-        vertex.addConstraints(missingDimension, constraints);
+    public void addMissingConstraint(Clock dimension, Constraint constraint) {
+        vertex.addConstraint(dimension, constraint);
+    }
+
+    public void addMissingConstraints(Clock dimension, Collection<Constraint> constraints) {
+        vertex.addConstraints(dimension, constraints);
     }
 
     public Vertex getVertex() {
         return vertex;
     }
 
-    public Clock getMissingDimension() {
-        return missingDimension;
+    public Collection<Clock> getMissingDimensions() {
+        return missingDimensions;
     }
 }

@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class SingleClockConstraint extends Constraint {
 
-    protected Clock clock;
+    protected final Clock clock;
 
     public SingleClockConstraint(Inequality inequality, boolean inclusive, double nValue, Clock clock) {
         super(inequality, inclusive, nValue);
