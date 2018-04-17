@@ -23,7 +23,7 @@ public class Zone {
         }
 
         Vertex origin = findOrigin(constraintZone, clocks);
-        vertices.add(origin);
+        addVertex(origin);
 
         for (int i = 0; i < vertices.size(); i++) {
             Vertex pivot = vertices.get(i);
@@ -61,15 +61,27 @@ public class Zone {
                     .get();
             Collection<Constraint> minMaxConstraints = twoClockConstraints.stream()
                     .filter(c -> c.getnValue() == minN).collect(Collectors.toList());
-            pivotResult.addMissingConstraints(missingDimension, minMaxConstraints);
+            TwoClockConstraint tcc = (TwoClockConstraint)LINQ.first(minMaxConstraints);
+            double tccValue = tcc.getnValue() + pivotResult.getVertex().getCoordinate(tcc.getClock2());
+            SingleClockConstraint scc = constraintZone.getMaxConstraint(missingDimension);
+            if (tccValue < scc.getnValue() || (tccValue == scc.getnValue() && !tcc.isInclusive() && scc.isInclusive())) {
+                pivotResult.addMissingConstraints(missingDimension, minMaxConstraints);
+            }
+            else {
+                pivotResult.addMissingConstraint(missingDimension, scc);
+            }
         }
 
         if (!vertices.contains(pivotResult.getVertex())) {
-            vertices.add(pivotResult.getVertex());
-            int index = vertices.size() - 1;
-            for (Constraint constraint : pivotResult.getVertex().getAllConstraints()) {
-                addVertexToFace(index, constraint);
-            }
+            addVertex(pivotResult.getVertex());
+        }
+    }
+
+    private void addVertex(Vertex vertex) {
+        vertices.add(vertex);
+        int index = vertices.size() - 1;
+        for (Constraint constraint : vertex.getAllConstraints()) {
+            addVertexToFace(index, constraint);
         }
     }
 
@@ -158,8 +170,7 @@ public class Zone {
                 .filter(v -> v.x == minX)
                 .collect(Collectors.toList());
         List<Vector3> hullVertices = getHullVerticesOfXPlane(planeVertices);
-        WorldPolygon polygon = new WorldPolygon(hullVertices, Vector3.left());
-        projectedPolygons.add(polygon);
+        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.left()));
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.x == maxX)

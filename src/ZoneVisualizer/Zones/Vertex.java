@@ -2,18 +2,19 @@ package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.Utility.LINQ;
+import com.sun.deploy.util.ArrayUtil;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Vertex {
 
-    private final Map<Clock, Collection<Constraint>> constraints = new HashMap<>();
+    private final Map<Clock, Set<Constraint>> constraints = new HashMap<>();
     private final Map<Clock, Double> coordinates = new HashMap<>();
     private boolean degenerate;
 
     public Vertex(Collection<Clock> dimensions) {
-        dimensions.forEach(c -> constraints.put(c, new ArrayList<>()));
+        dimensions.forEach(c -> constraints.put(c, new HashSet<>()));
     }
 
     public PivotResult pivot(Clock clock) {
@@ -29,7 +30,7 @@ public class Vertex {
         Vertex newVertex = new Vertex(constraints.keySet());
         boolean changedDimension = false;
         Collection<Clock> missingDimensions = new ArrayList<>();
-        for (Map.Entry<Clock, Collection<Constraint>> entry : constraints.entrySet()) {
+        for (Map.Entry<Clock, Set<Constraint>> entry : constraints.entrySet()) {
             if (entry.getKey() == clock) {
                 continue;
             }
@@ -122,7 +123,10 @@ public class Vertex {
             return false;
         }
         for (Clock key : constraints.keySet()) {
-            if (constraints.get(key) != other.constraints.get(key)) {
+            if (!other.constraints.containsKey(key)) {
+                return false;
+            }
+            if (!constraints.get(key).equals(other.constraints.get(key))) {
                 return false;
             }
         }

@@ -253,7 +253,7 @@ public class ConstraintZone {
         if (mapBySecondClock == null) {
             return new ArrayList<>();
         }
-        return mapBySecondClock.values();
+        return new ArrayList<>(mapBySecondClock.values());
     }
 
     public Collection<TwoClockConstraint> getTCConstraintBySecondary(Clock key) {
@@ -261,15 +261,15 @@ public class ConstraintZone {
         if (mapBySecondClock == null) {
             return new ArrayList<>();
         }
-        return mapBySecondClock.values();
+        return new ArrayList<>(mapBySecondClock.values());
     }
 
     public Collection<SingleClockConstraint> getMinConstraints() {
-        return minBoundConstraints.values();
+        return new ArrayList<>(minBoundConstraints.values());
     }
 
     public Collection<SingleClockConstraint> getMaxConstraints() {
-        return maxBoundConstraints.values();
+        return new ArrayList<>(maxBoundConstraints.values());
     }
 
     public Collection<TwoClockConstraint> getTCConstraints() {

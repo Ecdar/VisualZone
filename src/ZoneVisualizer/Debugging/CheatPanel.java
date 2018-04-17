@@ -30,9 +30,9 @@ public class CheatPanel extends GridPane {
         clockDimensions = Arrays.asList(
             new Clock("cooldown"),
             new Clock("work"),
-            new Clock("patience"),
-            new Clock("tired"),
-            new Clock("angry")
+            new Clock("patience")
+//            new Clock("tired"),
+//            new Clock("angry")
         );
         constraints = Arrays.asList(
                 new SingleClockConstraint(Inequality.GreaterThan, false, 2, clockDimensions.get(0)),
@@ -44,7 +44,7 @@ public class CheatPanel extends GridPane {
                 new TwoClockConstraint(Inequality.GreaterThan, false, -6, clockDimensions.get(1), clockDimensions.get(0)),
                 new TwoClockConstraint(Inequality.LessThan, true, 6, clockDimensions.get(1), clockDimensions.get(0)),
                 new TwoClockConstraint(Inequality.LessThan, true, 4, clockDimensions.get(1), clockDimensions.get(2)),
-                new TwoClockConstraint(Inequality.GreaterThan, false, -7, clockDimensions.get(2), clockDimensions.get(0))
+                new TwoClockConstraint(Inequality.GreaterThan, false, -4, clockDimensions.get(2), clockDimensions.get(0))
         );
         constraintCheckBoxes = constraints.stream().map(c -> new CheckBox(c.toString())).collect(Collectors.toList());
         constraintCheckBoxes.forEach(cb -> cb.setSelected(true));
