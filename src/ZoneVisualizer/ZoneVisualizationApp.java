@@ -19,6 +19,7 @@ import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.GraphicalElements.*;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class ZoneVisualizationApp extends Application {
@@ -133,11 +134,9 @@ public class ZoneVisualizationApp extends Application {
         set3DContent(Arrays.asList(content));
     }
 
-    public static void set3DContent(List<? extends Shape3D> content) {
+    public static void set3DContent(Collection<? extends Shape3D> content) {
         zone3DUI.clear();
-        for (Shape3D shape : content) {
-            zone3DUI.add(shape);
-        }
+        zone3DUI.addAll(content);
     }
 
     public static void setCamera2D(Vector3 focusPoint, Clock clock1, Clock clock2) {

@@ -4,14 +4,15 @@ import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
-import ZoneVisualizer.Zones.ConstraintZone;
+import ZoneVisualizer.Zones.Projector;
+import ZoneVisualizer.Zones.Projector2D;
+import ZoneVisualizer.Zones.Projector3D;
 import ZoneVisualizer.Zones.Zone;
-import javafx.scene.shape.Shape3D;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ZoneVisualization {
 
@@ -65,16 +66,22 @@ public class ZoneVisualization {
     }
 
     private static void twoClocksSetup() {
-        WorldPolygon projectedZone = zone.projectTo2DMesh(currentClockDimensions.get(0), currentClockDimensions.get(1));
-        ZoneVisualizationApp.set3DContent(projectedZone);
-        ZoneVisualizationApp.setCamera2D(projectedZone.getTransform().getPositionReadonly(),
+        Projector projector = new Projector2D(currentClockDimensions.get(0), currentClockDimensions.get(1));
+        Vector3 center = find3DContentAndCenter(projector);
+        ZoneVisualizationApp.setCamera2D(center,
                 currentClockDimensions.get(0), currentClockDimensions.get(1));
     }
 
     private static void threeClocksSetup() {
         ZoneVisualizationApp.disableRemainingClockDimensions(true);
-        List<WorldPolygon> projectedZoneFaces = zone.projectTo3DMesh(
+        Projector projector = new Projector3D(currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
+        Vector3 center = find3DContentAndCenter(projector);
+        ZoneVisualizationApp.setCamera3D(center,
                 currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
+    }
+
+    private static Vector3 find3DContentAndCenter(Projector projector) {
+        Collection<WorldPolygon> projectedZoneFaces = projector.project(zone);
         ZoneVisualizationApp.set3DContent(projectedZoneFaces);
         Vector3 center = new Vector3();
         List<Vector3> facePositions = projectedZoneFaces.stream()
@@ -82,7 +89,6 @@ public class ZoneVisualization {
         center.x = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.x));
         center.y = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.y));
         center.z = facePositions.stream().collect(Collectors.averagingDouble((Vector3 p) -> p.z));
-        ZoneVisualizationApp.setCamera3D(center,
-                currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
+        return center;
     }
 }

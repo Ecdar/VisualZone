@@ -135,138 +135,15 @@ public class Zone {
         faces.get(constraint).addVertexIndex(vertexIndex);
     }
 
-    public WorldPolygon projectTo2DMesh(Clock dimension1, Clock dimension2) {
-        List<Vector3> projectedVertices = new ArrayList<>();
-
-        for (Vertex vertex : vertices) {
-            Vector3 projectedVertex = new Vector3(vertex.getCoordinate(dimension1), vertex.getCoordinate(dimension2), 0);
-            if (!projectedVertices.contains(projectedVertex)) {
-                projectedVertices.add(projectedVertex);
-            }
-        }
-        List<Vector3> hullVertices = getHullVerticesOfZPlane(projectedVertices);
-
-        return new WorldPolygon(hullVertices, Vector3.back());
+    public List<Vertex> getVertices() {
+        return  new ArrayList<>(vertices);
     }
 
-    public List<WorldPolygon> projectTo3DMesh(Clock dimension1, Clock dimension2, Clock dimension3) {
-        List<WorldPolygon> projectedPolygons = new ArrayList<>();
-        List<Vector3> projectedVertices = new ArrayList<>();
-
-        for (Vertex vertex : vertices) {
-            Vector3 projectedVertex = new Vector3(vertex.getCoordinate(dimension1),
-                    vertex.getCoordinate(dimension2), vertex.getCoordinate(dimension3));
-            if (!projectedVertices.contains(projectedVertex)) {
-                projectedVertices.add(projectedVertex);
-            }
-        }
-        //Find the single clock constraint faces (non-tilted faces)
-        //(Inefficient? Traverses vertices a ton of times. Could use faces instead)
-        Double minX = getMinFromMappedValues(projectedVertices, vertex -> vertex.x);
-        Double maxX = getMaxFromMappedValues(projectedVertices, vertex -> vertex.x);
-        Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);
-        Double maxY = getMaxFromMappedValues(projectedVertices, vertex -> vertex.y);
-        Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
-        Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
-
-        List<Vector3> planeVertices = projectedVertices.stream()
-                .filter(v -> v.x == minX)
-                .collect(Collectors.toList());
-        List<Vector3> hullVertices = getHullVerticesOfXPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.left()));
-
-        planeVertices = projectedVertices.stream()
-                .filter(v -> v.x == maxX)
-                .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfXPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.right()));
-
-        planeVertices = projectedVertices.stream()
-                .filter(v -> v.y == minY)
-                .collect(Collectors.toList());
-        List<Vector3> yMinHullVertices = getHullVerticesOfYPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(yMinHullVertices, Vector3.down()));
-
-        planeVertices = projectedVertices.stream()
-                .filter(v -> v.y == maxY)
-                .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfYPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.up()));
-
-        planeVertices = projectedVertices.stream()
-                .filter(v -> v.z == minZ)
-                .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfZPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.back()));
-
-        planeVertices = projectedVertices.stream()
-                .filter(v -> v.z == maxZ)
-                .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfZPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.forward()));
-
-        //Finds the two clock constraint faces (tilted faces)
-        //(Doesn't reduce to hull vertices, so there will be more triangles than necessary)
-        for (Map.Entry<Constraint, Face> face : faces.entrySet()) {
-            if (face.getKey() instanceof TwoClockConstraint) {
-                TwoClockConstraint tcConstraint = (TwoClockConstraint)face.getKey();
-                if (isTCConstraintOfClocks(tcConstraint, dimension1, dimension2, dimension3)) {
-                    projectedPolygons.add(face.getValue().project(dimension1, dimension2, dimension3));
-                }
-            }
-        }
-
-        return projectedPolygons;
+    public Map<Constraint, Face> getFaces() {
+        return new HashMap<>(faces);
     }
 
-    private List<Vector3> getHullVerticesOfXPlane(List<Vector3> projectedVertices) {
-        Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);
-        Double maxY = getMaxFromMappedValues(projectedVertices, vertex -> vertex.y);
-        Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
-        Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
-
-        return projectedVertices.stream()
-                .filter(v -> v.y == minY || v.y == maxY || v.z == minZ || v.z == maxZ)
-                .collect(Collectors.toList());
-    }
-
-    private List<Vector3> getHullVerticesOfYPlane(List<Vector3> projectedVertices) {
-        Double minX = getMinFromMappedValues(projectedVertices, vertex -> vertex.x);
-        Double maxX = getMaxFromMappedValues(projectedVertices, vertex -> vertex.x);
-        Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
-        Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
-
-        return projectedVertices.stream()
-                .filter(v -> v.x == minX || v.x == maxX || v.z == minZ || v.z == maxZ)
-                .collect(Collectors.toList());
-    }
-
-    private List<Vector3> getHullVerticesOfZPlane(List<Vector3> projectedVertices) {
-        Double minX = getMinFromMappedValues(projectedVertices, vertex -> vertex.x);
-        Double maxX = getMaxFromMappedValues(projectedVertices, vertex -> vertex.x);
-        Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);
-        Double maxY = getMaxFromMappedValues(projectedVertices, vertex -> vertex.y);
-
-        return projectedVertices.stream()
-                .filter(v -> v.x == minX || v.x == maxX || v.y == minY || v.y == maxY)
-                .collect(Collectors.toList());
-    }
-
-    private Double getMinFromMappedValues(List<Vector3> projectedVertices, Function<? super Vector3, ? extends Double> mapper) {
-        return projectedVertices.stream().map(mapper).min(Double::compare).get();
-    }
-
-    private Double getMaxFromMappedValues(List<Vector3> projectedVertices, Function<? super Vector3, ? extends Double> mapper) {
-        return projectedVertices.stream().map(mapper).max(Double::compare).get();
-    }
-
-    private boolean isTCConstraintOfClocks(TwoClockConstraint tcConstraint, Clock c1, Clock c2, Clock c3) {
-        Clock clock1 = tcConstraint.getClock1(), clock2 = tcConstraint.getClock2();
-        return  (clock1 == c1 || clock1 == c2 || clock1 == c3) &&
-                (clock2 == c1 || clock2 == c2 || clock2 == c3);
-    }
-
-    protected class Face {
+    public class Face {
         private final List<Integer> verticeIndices = new ArrayList<>();
         private final Constraint constraint;
 
