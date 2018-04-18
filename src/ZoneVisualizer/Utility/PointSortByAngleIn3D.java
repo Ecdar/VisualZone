@@ -11,7 +11,7 @@ public class PointSortByAngleIn3D implements Comparator<Vector3> {
     private final Vector3 partitionVector;
 
     public PointSortByAngleIn3D(Vector3 normal, Vector3 pointReference) {
-        this.normal = normal;
+        this.normal = normal.copy();
 
         angleReference = pointReference;
         partitionVector = angleReference.crossProduct(normal);

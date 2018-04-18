@@ -114,4 +114,8 @@ public class Vector3 {
     protected Object clone() {
         return new Vector3(x, y, z);
     }
+
+    public Vector3 copy() {
+        return new Vector3(x, y, z);
+    }
 }

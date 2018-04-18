@@ -78,12 +78,19 @@ public class WorldPolygon extends MeshView implements Object3D {
             vertices.add(i, replace);
         }
 
-        vertices.sort(new PointSortByAngleIn3D(normal, vertices.get(0)));
+        if (normal.y != 0 && normal.x == 0 && normal.z == 0) {
+            //Up or down facing faces must sort reversed cause y is flipped
+            vertices.sort(new PointSortByAngleIn3D(normal, vertices.get(0)));
+        }
+        else {
+            vertices.sort(new PointSortByAngleIn3D(normal, vertices.get(0)).reversed());
+        }
 
         float[] localSpaceVertices = new float[vertices.size() * 3];
         for (int i = 0; i < vertices.size(); i++) {
             Vector3 vertex = vertices.get(i);
             localSpaceVertices[i * 3] = (float)vertex.x;
+            //Flip y axis because JavaFX
             localSpaceVertices[i * 3 + 1] = (float)(-vertex.y);
             localSpaceVertices[i * 3 + 2] = (float)vertex.z;
         }
