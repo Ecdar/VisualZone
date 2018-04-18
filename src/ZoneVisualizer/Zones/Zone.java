@@ -49,7 +49,10 @@ public class Zone {
             if (oldConstraint instanceof TwoClockConstraint) {
                 //Remove constraints that won't maximize dimension
                 TwoClockConstraint oldTcc = (TwoClockConstraint)oldConstraint;
-                twoClockConstraints.removeIf(tcc -> tcc.getnValue() <= oldTcc.getnValue());
+                if (oldTcc.getClock1() == missingDimension) {
+                    twoClockConstraints.removeIf(tcc -> tcc.getnValue() <= oldTcc.getnValue());
+                }
+                //Might need an else here for multi TCC vertices
             }
             if (twoClockConstraints.isEmpty()) {
                 pivotResult.addMissingConstraint(missingDimension, constraintZone.getMaxConstraint(missingDimension));
