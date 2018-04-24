@@ -58,6 +58,7 @@ public class Zone {
                 pivotResult.addMissingConstraint(missingDimension, constraintZone.getMaxConstraint(missingDimension));
                 continue;
             }
+            //Todo This isn't working. Depends on the bounds up to the TCCs as well
             Double minN = twoClockConstraints.stream()
                     .map(TwoClockConstraint::getnValue)
                     .min(Double::compareTo)

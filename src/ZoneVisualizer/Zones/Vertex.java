@@ -53,10 +53,10 @@ public class Vertex {
                     newVertex.addConstraint(entry.getKey(), tcc);
                     continue;
                 }
-                if (entry.getKey() != tcc.getClock1()) {
+                if (entry.getKey() == tcc.getClock1()) {
                     throw new IllegalStateException("Two Clock Constraint was not expected to bound " + tcc.getClock1());
                 }
-                //This TCC might change dimension back to it's clock1 if another TCC changes dimension to bound it's clock2
+                //This TCC might change dimension back to bounding it's clock1 if another TCC changes dimension to bound it's clock2
                 potentials.add(new VertexPotential(tcc, nonKey, entry.getKey()));
                 continue;
             }
@@ -104,15 +104,17 @@ public class Vertex {
 
     private double calculateCoordinate(Clock dimension) {
         Constraint constraint = LINQ.first(constraints.get(dimension));
+        return calculateCoordinate(dimension, constraint);
+    }
+
+    public double calculateCoordinate(Clock dimension, Constraint constraint) {
         if (constraint instanceof SingleClockConstraint) {
             return constraint.getnValue();
         }
         TwoClockConstraint tcc = (TwoClockConstraint)constraint;
-        if (dimension == tcc.getClock1()) {
-            //Recursion beware
-            return constraint.getnValue() + getCoordinate(tcc.getClock2());
-        }
-        return getCoordinate(tcc.getClock1()) - tcc.getnValue();
+        //Recursion beware
+        double otherValue = getCoordinate(tcc.getOtherClock(dimension));
+        return tcc.getOtherValue(dimension, otherValue);
     }
 
     @Override

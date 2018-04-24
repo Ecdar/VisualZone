@@ -38,6 +38,13 @@ public class TwoClockConstraint extends Constraint {
         return null;
     }
 
+    public double getOtherValue(Clock knownDimension, double knownValue) {
+        if (knownDimension == getClock1()) {
+            return getnValue() + knownValue;
+        }
+        return knownValue - getnValue();
+    }
+
     public TwoClockConstraint getInvertedConstraint() {
         Inequality invertedInequality = inequality;
         switch (inequality) {

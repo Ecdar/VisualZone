@@ -3,6 +3,7 @@ package ZoneVisualizer.Utility;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Predicate;
 
 public class LINQ {
@@ -49,5 +50,12 @@ public class LINQ {
             }
         }
         return null;
+    }
+
+    public static <TKey, TValue> void addToDeepMap(Map<TKey, Collection<TValue>> map, TKey key, TValue value) {
+        if (!map.containsKey(key)) {
+            map.put(key, new ArrayList<>());
+        }
+        map.get(key).add(value);
     }
 }
