@@ -2,7 +2,6 @@ package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.Utility.LINQ;
-import com.sun.deploy.util.ArrayUtil;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,8 +27,8 @@ public class Vertex {
         }
 
         Vertex newVertex = new Vertex(constraints.keySet());
-        boolean changedDimension = false;
-        Collection<Clock> missingDimensions = new ArrayList<>();
+        List<Clock> missingDimensions = new ArrayList<>();
+        Collection<VertexPotential> potentials = new ArrayList<>();
         for (Map.Entry<Clock, Set<Constraint>> entry : constraints.entrySet()) {
             if (entry.getKey() == clock) {
                 continue;
@@ -41,25 +40,31 @@ public class Vertex {
                     continue;
                 }
                 TwoClockConstraint tcc = (TwoClockConstraint)c;
-                if (tcc.getClock2() == clock) {
-                    newVertex.addConstraint(clock, tcc);
-                    changedDimension = true;
-                    missingDimensions.add(tcc.getClock1());
-                    //Todo this reversion isn't always correct
-                    //(if there are several tcc with clock2 == clock and resulting vertex isn't degenerate)
+                Clock nonKey = tcc.getOtherClock(entry.getKey());
+                if (nonKey == clock) {
+                    //This TCC is likely to change dimension
+                    potentials.add(new VertexPotential(tcc, entry.getKey(), nonKey));
+                    missingDimensions.add(entry.getKey());
+                    continue;
                 }
-                else {
+                Constraint otherBound = LINQ.first(constraints.get(nonKey));
+                if (otherBound instanceof SingleClockConstraint) {
+                    //Trivial case where TCC meets SCC
                     newVertex.addConstraint(entry.getKey(), tcc);
+                    continue;
                 }
+                if (entry.getKey() != tcc.getClock1()) {
+                    throw new IllegalStateException("Two Clock Constraint was not expected to bound " + tcc.getClock1());
+                }
+                //This TCC might change dimension back to it's clock1 if another TCC changes dimension to bound it's clock2
+                potentials.add(new VertexPotential(tcc, nonKey, entry.getKey()));
                 continue;
             }
             //Todo handle degenerate case
         }
-        if (!changedDimension) {
-            missingDimensions.add(clock);
-        }
+        missingDimensions.add(clock);
 
-        return new PivotResult(newVertex, missingDimensions);
+        return new PivotResult(newVertex, missingDimensions, potentials);
     }
 
     public Collection<Constraint> getConstraints(Clock key) {

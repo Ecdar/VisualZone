@@ -28,6 +28,16 @@ public class TwoClockConstraint extends Constraint {
         return clock2;
     }
 
+    public Clock getOtherClock(Clock clock) {
+        if (clock == clock1) {
+            return clock2;
+        }
+        if (clock == clock2) {
+            return clock1;
+        }
+        return null;
+    }
+
     public TwoClockConstraint getInvertedConstraint() {
         Inequality invertedInequality = inequality;
         switch (inequality) {

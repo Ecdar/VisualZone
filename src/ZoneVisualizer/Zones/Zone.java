@@ -6,7 +6,6 @@ import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Zone {
@@ -42,7 +41,8 @@ public class Zone {
         if (pivotResult == null) {
             return;
         }
-        for (Clock missingDimension : pivotResult.getMissingDimensions()) {
+        while (!pivotResult.getMissingDimensions().isEmpty()) {
+            Clock missingDimension = pivotResult.getMissingDimensions().get(0);
             Collection<TwoClockConstraint> twoClockConstraints =
                     constraintZone.getTCConstraintByPrimary(missingDimension);
             Constraint oldConstraint = LINQ.first(pivot.getConstraints(missingDimension));

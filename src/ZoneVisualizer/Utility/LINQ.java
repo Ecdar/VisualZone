@@ -3,6 +3,7 @@ package ZoneVisualizer.Utility;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 public class LINQ {
 
@@ -35,6 +36,17 @@ public class LINQ {
         Iterator<T> iterator = collection.iterator();
         if (iterator.hasNext()) {
             return iterator.next();
+        }
+        return null;
+    }
+
+    public static <T> T first(Collection<T> collection, Predicate<T> predicate) {
+        Iterator<T> iterator = collection.iterator();
+        while (iterator.hasNext()) {
+            T next = iterator.next();
+            if (predicate.test(next)) {
+                return next;
+            }
         }
         return null;
     }

@@ -57,7 +57,7 @@ public class CheatPanel extends GridPane {
         setRowIndex(testButton, constraintCheckBoxes.size());
     }
 
-    private  void testAddButtonPress(ActionEvent event) {
+    private void testAddButtonPress(ActionEvent event) {
         List<Constraint> chosenConstraints = new ArrayList<>();
         for (int i = 0; i < constraints.size(); i++) {
             if (constraintCheckBoxes.get(i).isSelected()) {
