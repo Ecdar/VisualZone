@@ -49,7 +49,7 @@ public class Zone {
             double oldValue = pivot.getCoordinate(missingDimension);
             twoClockConstraints.removeIf(tcc ->
                     pivot.getAllConstraints().contains(tcc) ||
-                    getTCCValue(pivotResult, tcc) <= oldValue);
+                    getTCCValue(pivot, tcc) <= oldValue);
 
             if (twoClockConstraints.isEmpty()) {
                 pivotResult.addMissingConstraint(missingDimension, constraintZone.getMaxConstraint(missingDimension));
@@ -57,7 +57,7 @@ public class Zone {
             }
 
             Pair<Collection<TwoClockConstraint>, Double> minimizingResult =
-                    LINQ.getMinimums(twoClockConstraints, tcc -> getTCCValue(pivotResult, tcc));
+                    LINQ.getMinimums(twoClockConstraints, tcc -> getTCCValue(pivot, tcc));
             Collection<TwoClockConstraint> minMaxConstraints = minimizingResult.getKey();
             Double tccValue = minimizingResult.getValue();
             SingleClockConstraint scc = constraintZone.getMaxConstraint(missingDimension);
@@ -74,8 +74,9 @@ public class Zone {
         }
     }
 
-    private Double getTCCValue(PivotResult pivotResult, TwoClockConstraint tcc) {
-        double knownValue = pivotResult.getVertex().getCoordinate(tcc.getClock2());
+    //What value would ttc.clock2 have if this TCC was used as upper bound in this vertex instead of whats there now
+    private Double getTCCValue(Vertex vertex, TwoClockConstraint tcc) {
+        double knownValue = vertex.getCoordinate(tcc.getClock2());
         return tcc.getOtherValue(tcc.getClock2(), knownValue);
     }
 
