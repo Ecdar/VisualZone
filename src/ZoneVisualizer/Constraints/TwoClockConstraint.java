@@ -39,7 +39,7 @@ public class TwoClockConstraint extends Constraint {
     }
 
     public double getOtherValue(Clock knownDimension, double knownValue) {
-        if (knownDimension == getClock1()) {
+        if (knownDimension == getClock2()) {
             return getnValue() + knownValue;
         }
         return knownValue - getnValue();

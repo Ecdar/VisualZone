@@ -2,13 +2,14 @@ package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
-import ZoneVisualizer.Constraints.SingleClockConstraint;
 import ZoneVisualizer.Constraints.TwoClockConstraint;
+
+import java.util.Collection;
 
 public class VertexPotential {
 
     private final TwoClockConstraint constraint;
-    private Constraint resolution;
+    private Collection<? extends Constraint> resolution;
     private final Clock oldDimension;
     private final Clock newDimension;
 
@@ -30,11 +31,11 @@ public class VertexPotential {
         return newDimension;
     }
 
-    public Constraint getResolution() {
+    public Collection<? extends Constraint> getResolution() {
         return resolution;
     }
 
-    public void setResolution(Constraint resolution) {
+    public void setResolution(Collection<? extends Constraint> resolution) {
         this.resolution = resolution;
     }
 }

@@ -3,6 +3,7 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.Utility.LINQ;
+import javafx.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,36 +52,30 @@ public class PivotResult {
     }
 
     public void addMissingConstraint(Clock dimension, Constraint constraint) {
+        addMissingConstraints(dimension, Arrays.asList(constraint));
+    }
+
+    public void addMissingConstraints(Clock dimension, Collection<? extends Constraint> constraints) {
         missingDimensions.remove(dimension);
         Collection<VertexPotential> resolveCandidates = vertexPotentials.stream()
                 .filter(p -> p.getOldDimension() == dimension)
                 .collect(Collectors.toList());
-        if (Double.isFinite(constraint.getnValue())) {
-            resolveConstraint(constraint, resolveCandidates);
+        if (Double.isFinite(LINQ.first(constraints).getnValue())) {
+            if (resolveCandidates.isEmpty()) {
+                vertex.addConstraints(dimension, constraints);
+            }
+            else {
+                resolveConstraint(constraints, resolveCandidates);
+            }
             return;
         }
 
-        //Todo this is as far as I got (everything below in this method is probably shit)
-        Collection<VertexPotential> secondaryResolveCandidates = vertexPotentials.stream()
-                .filter(p -> p.getNewDimension() == dimension)
-                .collect(Collectors.toList());
-        if (resolveCandidates.isEmpty()) {
-            resolveMissingConstraint(dimension, constraint, resolveCandidates);
-            return;
-        }
-        if (!Double.isFinite(constraint.getnValue())) {
-            //Old ones should bound again
-
-            return;
-        }
-        //Maybe? Could be degenerate
-        resolveMissingConstraint(dimension, constraint, resolveCandidates);
-        //Resolve candidates
+        //Todo handle none finite cases
     }
 
-    private void resolveConstraint(Constraint constraint, Collection<VertexPotential> resolveCandidates) {
+    private void resolveConstraint(Collection<? extends Constraint> constraints, Collection<VertexPotential> resolveCandidates) {
         for (VertexPotential candidate : new ArrayList<>(resolveCandidates)) {
-            candidate.setResolution(constraint);
+            candidate.setResolution(constraints);
             vertexPotentials.remove(candidate);
             Clock newDimension = candidate.getNewDimension();
             LINQ.addToDeepMap(resolutionCandidates, newDimension, candidate);
@@ -92,55 +87,22 @@ public class PivotResult {
 
     private void resolveDimension(Clock newDimension) {
         Collection<VertexPotential> resolvedPotentials = resolutionCandidates.remove(newDimension);
-        Collection<VertexPotential> minimumCandidates = new ArrayList<>();
-        Iterator<VertexPotential> iterator = resolvedPotentials.iterator();
-        VertexPotential first = iterator.next();
-        minimumCandidates.add(first);
-        double minimum = resolveValue(first);
-        while (iterator.hasNext()) {
-            VertexPotential candidate = iterator.next();
-            double dimensionValue = resolveValue(candidate);
-            if (dimensionValue < minimum) {
-                minimumCandidates.clear();
-                minimumCandidates.add(candidate);
-                minimum = dimensionValue;
-            }
-            else if (dimensionValue == minimum) {
-                minimumCandidates.add(candidate);
-            }
-        }
+        Pair<Collection<VertexPotential>, Double> minimizingResult = LINQ.getMinimums(resolvedPotentials, this::resolveValue);
+        Collection<VertexPotential> minimumCandidates = minimizingResult.getKey();
         resolvedPotentials.removeAll(minimumCandidates);
         vertex.addConstraints(newDimension, minimumCandidates.stream().map(VertexPotential::getConstraint).collect(Collectors.toList()));
         for (VertexPotential potential : minimumCandidates) {
-            vertex.addConstraint(potential.getOldDimension(), potential.getResolution());
+            vertex.addConstraints(potential.getOldDimension(), potential.getResolution());
         }
         for (VertexPotential potential : resolvedPotentials) {
             vertex.addConstraint(potential.getOldDimension(), potential.getConstraint());
         }
     }
 
-    private double resolveValue(VertexPotential first) {
-        double knownValue = vertex.calculateCoordinate(first.getOldDimension(), first.getResolution());
-        return first.getConstraint()
-                .getOtherValue(first.getOldDimension(), knownValue);
-    }
-
-    private void resolveMissingConstraint(Clock dimension, Constraint constraint, Collection<VertexPotential> resolveCandidates) {
-        vertex.addConstraint(dimension, constraint);
-        for (VertexPotential candidate : resolveCandidates) {
-            vertex.addConstraint(candidate.getNewDimension(), candidate.getConstraint());
-        }
-        Collection<VertexPotential> deniedCandidates = vertexPotentials.stream()
-                .filter(p -> p.getNewDimension() == dimension)
-                .collect(Collectors.toList());
-        for (VertexPotential candidate : deniedCandidates) {
-            vertex.addConstraint(candidate.getOldDimension(), candidate.getConstraint());
-        }
-    }
-
-    public void addMissingConstraints(Clock dimension, Collection<Constraint> constraints) {
-        missingDimensions.remove(dimension);
-        vertex.addConstraints(dimension, constraints);
+    private double resolveValue(VertexPotential potential) {
+        double knownValue = vertex.calculateCoordinate(potential.getOldDimension(), LINQ.first(potential.getResolution()));
+        return potential.getConstraint()
+                .getOtherValue(potential.getOldDimension(), knownValue);
     }
 
 

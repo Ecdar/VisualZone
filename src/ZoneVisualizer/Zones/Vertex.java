@@ -62,7 +62,9 @@ public class Vertex {
             }
             //Todo handle degenerate case
         }
-        missingDimensions.add(clock);
+        if (missingDimensions.isEmpty()) {
+            missingDimensions.add(clock);
+        }
 
         return new PivotResult(newVertex, missingDimensions, potentials);
     }
@@ -84,7 +86,7 @@ public class Vertex {
         }
     }
 
-    public void addConstraints(Clock key, Collection<Constraint> values) {
+    public void addConstraints(Clock key, Collection<? extends Constraint> values) {
         constraints.get(key).addAll(values);
         if (constraints.get(key).size() > 1) {
             degenerate = true;
@@ -113,8 +115,9 @@ public class Vertex {
         }
         TwoClockConstraint tcc = (TwoClockConstraint)constraint;
         //Recursion beware
-        double otherValue = getCoordinate(tcc.getOtherClock(dimension));
-        return tcc.getOtherValue(dimension, otherValue);
+        Clock otherClock = tcc.getOtherClock(dimension);
+        double otherValue = getCoordinate(otherClock);
+        return tcc.getOtherValue(otherClock, otherValue);
     }
 
     @Override

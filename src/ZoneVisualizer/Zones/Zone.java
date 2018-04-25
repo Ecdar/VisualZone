@@ -4,6 +4,7 @@ import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import ZoneVisualizer.Utility.LINQ;
+import javafx.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,30 +46,22 @@ public class Zone {
             Clock missingDimension = pivotResult.getMissingDimensions().get(0);
             Collection<TwoClockConstraint> twoClockConstraints =
                     constraintZone.getTCConstraintByPrimary(missingDimension);
-            Constraint oldConstraint = LINQ.first(pivot.getConstraints(missingDimension));
-            if (oldConstraint instanceof TwoClockConstraint) {
-                //Remove constraints that won't maximize dimension
-                TwoClockConstraint oldTcc = (TwoClockConstraint)oldConstraint;
-                if (oldTcc.getClock1() == missingDimension) {
-                    twoClockConstraints.removeIf(tcc -> tcc.getnValue() <= oldTcc.getnValue());
-                }
-                //Might need an else here for multi TCC vertices
-            }
+            double oldValue = pivot.getCoordinate(missingDimension);
+            twoClockConstraints.removeIf(tcc ->
+                    pivot.getAllConstraints().contains(tcc) ||
+                    getTCCValue(pivotResult, tcc) <= oldValue);
+
             if (twoClockConstraints.isEmpty()) {
                 pivotResult.addMissingConstraint(missingDimension, constraintZone.getMaxConstraint(missingDimension));
                 continue;
             }
-            //Todo This isn't working. Depends on the bounds up to the TCCs as well
-            Double minN = twoClockConstraints.stream()
-                    .map(TwoClockConstraint::getnValue)
-                    .min(Double::compareTo)
-                    .get();
-            Collection<Constraint> minMaxConstraints = twoClockConstraints.stream()
-                    .filter(c -> c.getnValue() == minN).collect(Collectors.toList());
-            TwoClockConstraint tcc = (TwoClockConstraint)LINQ.first(minMaxConstraints);
-            double tccValue = tcc.getnValue() + pivotResult.getVertex().getCoordinate(tcc.getClock2());
+
+            Pair<Collection<TwoClockConstraint>, Double> minimizingResult =
+                    LINQ.getMinimums(twoClockConstraints, tcc -> getTCCValue(pivotResult, tcc));
+            Collection<TwoClockConstraint> minMaxConstraints = minimizingResult.getKey();
+            Double tccValue = minimizingResult.getValue();
             SingleClockConstraint scc = constraintZone.getMaxConstraint(missingDimension);
-            if (tccValue < scc.getnValue() || (tccValue == scc.getnValue() && !tcc.isInclusive() && scc.isInclusive())) {
+            if (tccValue < scc.getnValue()) {
                 pivotResult.addMissingConstraints(missingDimension, minMaxConstraints);
             }
             else {
@@ -79,6 +72,11 @@ public class Zone {
         if (!vertices.contains(pivotResult.getVertex())) {
             addVertex(pivotResult.getVertex());
         }
+    }
+
+    private Double getTCCValue(PivotResult pivotResult, TwoClockConstraint tcc) {
+        double knownValue = pivotResult.getVertex().getCoordinate(tcc.getClock2());
+        return tcc.getOtherValue(tcc.getClock2(), knownValue);
     }
 
     private void addVertex(Vertex vertex) {

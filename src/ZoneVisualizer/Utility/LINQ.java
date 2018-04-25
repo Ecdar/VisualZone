@@ -1,9 +1,12 @@
 package ZoneVisualizer.Utility;
 
+import javafx.util.Pair;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class LINQ {
@@ -57,5 +60,26 @@ public class LINQ {
             map.put(key, new ArrayList<>());
         }
         map.get(key).add(value);
+    }
+
+    public static <T> Pair<Collection<T>, Double> getMinimums(Collection<? extends T> collection, Function<T, Double> valueFunction) {
+        Collection<T> minimumCandidates = new ArrayList<>();
+        Iterator<? extends T> iterator = collection.iterator();
+        T first = iterator.next();
+        minimumCandidates.add(first);
+        double minimum = valueFunction.apply(first);
+        while (iterator.hasNext()) {
+            T candidate = iterator.next();
+            double dimensionValue = valueFunction.apply(candidate);
+            if (dimensionValue < minimum) {
+                minimumCandidates.clear();
+                minimumCandidates.add(candidate);
+                minimum = dimensionValue;
+            }
+            else if (dimensionValue == minimum) {
+                minimumCandidates.add(candidate);
+            }
+        }
+        return new Pair<>(minimumCandidates, minimum);
     }
 }
