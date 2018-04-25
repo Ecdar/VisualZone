@@ -60,17 +60,16 @@ public class PivotResult {
         Collection<VertexPotential> resolveCandidates = vertexPotentials.stream()
                 .filter(p -> p.getOldDimension() == dimension)
                 .collect(Collectors.toList());
-        if (Double.isFinite(LINQ.first(constraints).getnValue())) {
-            if (resolveCandidates.isEmpty()) {
-                vertex.addConstraints(dimension, constraints);
-            }
-            else {
-                resolveConstraint(constraints, resolveCandidates);
-            }
+        if (resolveCandidates.isEmpty()) {
+            vertex.addConstraints(dimension, constraints);
             return;
         }
-
-        //Todo handle none finite cases
+        if (Double.isFinite(LINQ.first(constraints).getnValue())) {
+            resolveConstraint(constraints, resolveCandidates);
+            return;
+        }
+        //Todo Resolve candidates should be used instead. Add their other dimension to missing (unless present)
+        //Todo when those dimensions are found resolve by choosing minimum. Others gets to resolve to new dimension.
     }
 
     private void resolveConstraint(Collection<? extends Constraint> constraints, Collection<VertexPotential> resolveCandidates) {

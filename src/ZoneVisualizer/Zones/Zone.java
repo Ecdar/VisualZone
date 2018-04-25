@@ -48,7 +48,7 @@ public class Zone {
                     constraintZone.getTCConstraintByPrimary(missingDimension);
             double oldValue = pivot.getCoordinate(missingDimension);
             SingleClockConstraint dimensionMax = constraintZone.getMaxConstraint(missingDimension);
-            //A TCC is eligible for addition if it was not used earlier, it will make dimension greater,
+            //A TCC is eligible for addition if it was not used earlier and it will make dimension greater,
             //but not greater than the max of that dimension
             twoClockConstraints.removeIf(tcc -> {
                         if(pivot.getAllConstraints().contains(tcc)) {
