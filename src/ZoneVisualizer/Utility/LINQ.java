@@ -62,7 +62,7 @@ public class LINQ {
         map.get(key).add(value);
     }
 
-    public static <T> Pair<Collection<T>, Double> getMinimums(Collection<? extends T> collection, Function<T, Double> valueFunction) {
+    public static <T> Collection<T> getMinimums(Collection<? extends T> collection, Function<T, Double> valueFunction) {
         Collection<T> minimumCandidates = new ArrayList<>();
         Iterator<? extends T> iterator = collection.iterator();
         T first = iterator.next();
@@ -80,6 +80,6 @@ public class LINQ {
                 minimumCandidates.add(candidate);
             }
         }
-        return new Pair<>(minimumCandidates, minimum);
+        return minimumCandidates;
     }
 }

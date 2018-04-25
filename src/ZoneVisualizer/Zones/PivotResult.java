@@ -87,8 +87,7 @@ public class PivotResult {
 
     private void resolveDimension(Clock newDimension) {
         Collection<VertexPotential> resolvedPotentials = resolutionCandidates.remove(newDimension);
-        Pair<Collection<VertexPotential>, Double> minimizingResult = LINQ.getMinimums(resolvedPotentials, this::resolveValue);
-        Collection<VertexPotential> minimumCandidates = minimizingResult.getKey();
+        Collection<VertexPotential> minimumCandidates = LINQ.getMinimums(resolvedPotentials, this::resolveValue);
         resolvedPotentials.removeAll(minimumCandidates);
         vertex.addConstraints(newDimension, minimumCandidates.stream().map(VertexPotential::getConstraint).collect(Collectors.toList()));
         for (VertexPotential potential : minimumCandidates) {

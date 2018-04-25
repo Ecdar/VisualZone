@@ -47,26 +47,27 @@ public class Zone {
             Collection<TwoClockConstraint> twoClockConstraints =
                     constraintZone.getTCConstraintByPrimary(missingDimension);
             double oldValue = pivot.getCoordinate(missingDimension);
-            twoClockConstraints.removeIf(tcc ->
-                    pivot.getAllConstraints().contains(tcc) ||
-                    getTCCValue(pivot, tcc) <= oldValue);
+            SingleClockConstraint dimensionMax = constraintZone.getMaxConstraint(missingDimension);
+            //A TCC is eligible for addition if it was not used earlier, it will make dimension greater,
+            //but not greater than the max of that dimension
+            twoClockConstraints.removeIf(tcc -> {
+                        if(pivot.getAllConstraints().contains(tcc)) {
+                            return true;
+                        }
+                        Double tccValue = getTCCValue(pivot, tcc);
+                        return tccValue <= oldValue || tccValue >= dimensionMax.getnValue();
+                    });
 
             if (twoClockConstraints.isEmpty()) {
                 pivotResult.addMissingConstraint(missingDimension, constraintZone.getMaxConstraint(missingDimension));
                 continue;
             }
 
-            Pair<Collection<TwoClockConstraint>, Double> minimizingResult =
+            //Calculating the TCC values again unnecessarily, probably better to save them
+            Collection<TwoClockConstraint> minMaxConstraints =
                     LINQ.getMinimums(twoClockConstraints, tcc -> getTCCValue(pivot, tcc));
-            Collection<TwoClockConstraint> minMaxConstraints = minimizingResult.getKey();
-            Double tccValue = minimizingResult.getValue();
-            SingleClockConstraint scc = constraintZone.getMaxConstraint(missingDimension);
-            if (tccValue < scc.getnValue()) {
-                pivotResult.addMissingConstraints(missingDimension, minMaxConstraints);
-            }
-            else {
-                pivotResult.addMissingConstraint(missingDimension, scc);
-            }
+
+            pivotResult.addMissingConstraints(missingDimension, minMaxConstraints);
         }
 
         if (!vertices.contains(pivotResult.getVertex())) {
