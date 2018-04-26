@@ -46,7 +46,6 @@ public class Zone {
             Clock missingDimension = pivotResult.getMissingDimensions().get(0);
             Collection<TwoClockConstraint> twoClockConstraints =
                     constraintZone.getTCConstraintByPrimary(missingDimension);
-            double oldValue = pivot.getCoordinate(missingDimension);
             SingleClockConstraint dimensionMax = constraintZone.getMaxConstraint(missingDimension);
             //A TCC is eligible for addition if it was not used earlier and it will make dimension greater,
             //but not greater than the max of that dimension
@@ -55,11 +54,12 @@ public class Zone {
                             return true;
                         }
                         Double tccValue = getTCCValue(pivot, tcc);
+                        Double oldValue = pivot.getCoordinate(missingDimension);
                         return tccValue <= oldValue || tccValue >= dimensionMax.getnValue();
                     });
 
             if (twoClockConstraints.isEmpty()) {
-                pivotResult.addMissingConstraint(missingDimension, constraintZone.getMaxConstraint(missingDimension));
+                pivotResult.addMissingConstraint(missingDimension, dimensionMax);
                 continue;
             }
 

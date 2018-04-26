@@ -38,4 +38,19 @@ public class VertexPotential {
     public void setResolution(Collection<? extends Constraint> resolution) {
         this.resolution = resolution;
     }
+
+    public Clock getOtherDimension(Clock clock) {
+        if (clock == newDimension) {
+            return oldDimension;
+        }
+        if (clock == oldDimension) {
+            return newDimension;
+        }
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return constraint.toString() + ", " + (resolution == null ? "unresolved" : "(" + resolution + ")");
+    }
 }

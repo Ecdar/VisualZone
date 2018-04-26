@@ -2,7 +2,7 @@ package ZoneVisualizer.Constraints;
 
 public class Clock {
 
-    protected String name;
+    protected final String name;
 
     public Clock(String name) {
         this.name = name;
@@ -27,5 +27,10 @@ public class Clock {
     @Override
     public int hashCode() {
         return name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

@@ -3,7 +3,6 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.Utility.LINQ;
-import javafx.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,6 +14,7 @@ public class PivotResult {
     private Collection<VertexPotential> vertexPotentials;
 
     private Map<Clock, Collection<VertexPotential>> resolutionCandidates = new HashMap<>();
+    private Map<Clock, Collection<VertexPotential>> deniedCandidates = new HashMap<>();
 
     public PivotResult(Vertex vertex, List<Clock> missingDimensions, Collection<VertexPotential> vertexPotentials) {
         this.vertex = vertex;
@@ -51,8 +51,8 @@ public class PivotResult {
         }
     }
 
-    public void addMissingConstraint(Clock dimension, Constraint constraint) {
-        addMissingConstraints(dimension, Arrays.asList(constraint));
+    public void addMissingConstraint(Clock dimension, Constraint... constraints) {
+        addMissingConstraints(dimension, Arrays.asList(constraints));
     }
 
     public void addMissingConstraints(Clock dimension, Collection<? extends Constraint> constraints) {
@@ -61,46 +61,107 @@ public class PivotResult {
                 .filter(p -> p.getOldDimension() == dimension)
                 .collect(Collectors.toList());
         if (resolveCandidates.isEmpty()) {
-            vertex.addConstraints(dimension, constraints);
+            Collection<VertexPotential> resolveDeniedCandidates = getAllDeniedCandidates().stream()
+                    .filter(c -> c.getNewDimension() == dimension)
+                    .collect(Collectors.toList());
+            if (resolveCandidates.isEmpty()) {
+                vertex.addConstraints(dimension, constraints);
+            }
+            else {
+                resolveDeniedWithConstraints(constraints, resolveDeniedCandidates);
+            }
             return;
         }
         if (Double.isFinite(LINQ.first(constraints).getnValue())) {
-            resolveConstraint(constraints, resolveCandidates);
+            resolveWithConstraints(constraints, resolveCandidates);
+            resolveDeniedWithConstraints(dimension, constraints);
             return;
         }
-        //Todo Resolve candidates should be used instead. Add their other dimension to missing (unless present)
-        //Todo when those dimensions are found resolve by choosing minimum. Others gets to resolve to new dimension.
+
+        deniedCandidates.put(dimension, resolveCandidates);
+        vertexPotentials.removeAll(resolveCandidates);
+        for (VertexPotential candidate : resolveCandidates) {
+            Clock missingDimension = candidate.getNewDimension();
+            Collection<Constraint> foundConstraints = vertex.getConstraints(missingDimension);
+            if (!foundConstraints.isEmpty()) {
+                //Dimension has already been found
+                candidate.setResolution(foundConstraints);
+                continue;
+            }
+            if (!missingDimensions.contains(missingDimension)) {
+                missingDimensions.add(missingDimension);
+            }
+        }
+        if (deniedResolutionReady(dimension)) {
+            resolveDimension(dimension, deniedCandidates);
+        }
     }
 
-    private void resolveConstraint(Collection<? extends Constraint> constraints, Collection<VertexPotential> resolveCandidates) {
+    private void resolveWithConstraints(Collection<? extends Constraint> constraints, Collection<VertexPotential> resolveCandidates) {
         for (VertexPotential candidate : new ArrayList<>(resolveCandidates)) {
             candidate.setResolution(constraints);
             vertexPotentials.remove(candidate);
             Clock newDimension = candidate.getNewDimension();
             LINQ.addToDeepMap(resolutionCandidates, newDimension, candidate);
-            if (vertexPotentials.stream().noneMatch(p -> p.getNewDimension() == newDimension)) {
-                resolveDimension(newDimension);
+            if (candidatesResolutionReady(newDimension)) {
+                resolveDimension(newDimension, resolutionCandidates);
             }
         }
     }
 
-    private void resolveDimension(Clock newDimension) {
-        Collection<VertexPotential> resolvedPotentials = resolutionCandidates.remove(newDimension);
-        Collection<VertexPotential> minimumCandidates = LINQ.getMinimums(resolvedPotentials, this::resolveValue);
-        resolvedPotentials.removeAll(minimumCandidates);
-        vertex.addConstraints(newDimension, minimumCandidates.stream().map(VertexPotential::getConstraint).collect(Collectors.toList()));
-        for (VertexPotential potential : minimumCandidates) {
-            vertex.addConstraints(potential.getOldDimension(), potential.getResolution());
-        }
-        for (VertexPotential potential : resolvedPotentials) {
-            vertex.addConstraint(potential.getOldDimension(), potential.getConstraint());
+    private void resolveDeniedWithConstraints(Clock dimension, Collection<? extends Constraint> constraints) {
+        Collection<VertexPotential> resolveDeniedCandidates = getAllDeniedCandidates().stream()
+                .filter(c -> c.getNewDimension() == dimension)
+                .collect(Collectors.toList());
+        resolveDeniedWithConstraints(constraints, resolveDeniedCandidates);
+    }
+
+    private void resolveDeniedWithConstraints(Collection<? extends Constraint> constraints,
+                                              Collection<VertexPotential> resolveDeniedPotentials) {
+        for (VertexPotential deniedCandidate : resolveDeniedPotentials) {
+            deniedCandidate.setResolution(constraints);
+            Clock oldDimension = deniedCandidate.getOldDimension();
+            if (deniedResolutionReady(oldDimension)) {
+                resolveDimension(oldDimension, deniedCandidates);
+            }
         }
     }
 
-    private double resolveValue(VertexPotential potential) {
-        double knownValue = vertex.calculateCoordinate(potential.getOldDimension(), LINQ.first(potential.getResolution()));
+    private Collection<VertexPotential> getAllDeniedCandidates() {
+        return deniedCandidates.values().stream().flatMap(c -> c.stream()).collect(Collectors.toList());
+    }
+
+    private void resolveDimension(Clock dimension, Map<Clock, Collection<VertexPotential>> candidatesToFinish) {
+        Collection<VertexPotential> resolvedPotentials = candidatesToFinish.remove(dimension);
+        //Might be a problem here? If there is a lower bound parallel to the potential
+        //Todo there is a problem here when there are multiple potentials and a resolution is also a TCC
+        Collection<VertexPotential> minimumCandidates = LINQ.getMinimums(resolvedPotentials, p -> resolveValue(p, dimension));
+        resolvedPotentials.removeAll(minimumCandidates);
+        vertex.addConstraints(dimension, minimumCandidates.stream().map(VertexPotential::getConstraint).collect(Collectors.toList()));
+        for (VertexPotential potential : minimumCandidates) {
+            vertex.addConstraints(potential.getOtherDimension(dimension), potential.getResolution());
+        }
+        for (VertexPotential potential : resolvedPotentials) {
+            vertex.addConstraint(potential.getOtherDimension(dimension), potential.getConstraint());
+        }
+    }
+
+    private double resolveValue(VertexPotential potential, Clock dimension) {
+        Clock knownDimension = potential.getOtherDimension(dimension);
+        double knownValue = vertex.calculateCoordinate(knownDimension, LINQ.first(potential.getResolution()));
         return potential.getConstraint()
-                .getOtherValue(potential.getOldDimension(), knownValue);
+                .getOtherValue(knownDimension, knownValue);
+    }
+
+    private boolean candidatesResolutionReady(Clock newDimension) {
+        return vertexPotentials.stream().noneMatch(p -> p.getNewDimension() == newDimension);
+    }
+
+    private boolean deniedResolutionReady(Clock dimension) {
+        if (!deniedCandidates.containsKey(dimension)) {
+            return false;
+        }
+        return deniedCandidates.get(dimension).stream().allMatch(c -> c.getResolution() != null);
     }
 
 

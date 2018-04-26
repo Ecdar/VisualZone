@@ -149,6 +149,17 @@ public class Vertex {
         return constraintSet.hashCode();
     }
 
+    @Override
+    public String toString() {
+        Set<Constraint> allConstraints = getAllConstraints();
+        if (allConstraints.isEmpty()) {
+            return "Empty Vertex";
+        }
+        return allConstraints.stream()
+                .map(c -> c.toString())
+                .reduce((s1, s2) -> s1 + ", " + s2).get();
+    }
+
     public static class VertexComparator implements Comparator<Vertex> {
 
         private final List<Clock> dimensionOrder;
