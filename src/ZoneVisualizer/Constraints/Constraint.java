@@ -34,6 +34,8 @@ public abstract class Constraint {
 
     public abstract Collection<Clock> clocksAsCollection();
 
+    public abstract boolean isLowerBoundOnDimension(Clock dimension);
+
     @Override
     public String toString() {
         String result = "";

@@ -26,6 +26,9 @@ public class Projector3D extends Projector {
     @Override
     public Collection<WorldPolygon> project(Zone zone) {
         List<WorldPolygon> projectedPolygons = new ArrayList<>();
+        if (zone.getVertices().isEmpty()) {
+            return projectedPolygons;
+        }
         List<Vector3> projectedVertices = new ArrayList<>();
 
         for (Vertex vertex : zone.getVertices()) {
@@ -59,8 +62,8 @@ public class Projector3D extends Projector {
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.y == minY)
                 .collect(Collectors.toList());
-        List<Vector3> yMinHullVertices = getHullVerticesOfYPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(yMinHullVertices, Vector3.down()));
+        hullVertices = getHullVerticesOfYPlane(planeVertices);
+        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.down()));
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.y == maxY)

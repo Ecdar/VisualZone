@@ -4,7 +4,6 @@ import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import ZoneVisualizer.Utility.LINQ;
-import javafx.util.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,7 +29,9 @@ public class Zone {
 
             for (Clock clock : clocks) {
                 PivotResult pivotResult = pivot.pivot(clock);
-                findMissingConstraintsAfterPivot(constraintZone, pivot, pivotResult);
+                if (pivotResult != null) {
+                    findMissingConstraintsAfterPivot(constraintZone, pivot, pivotResult);
+                }
             }
             if (pivot.isDegenerate()) {
                 //Todo pivot along extra edges in degenerate case
@@ -39,14 +40,12 @@ public class Zone {
     }
 
     private void findMissingConstraintsAfterPivot(ConstraintZone constraintZone, Vertex pivot, PivotResult pivotResult) {
-        if (pivotResult == null) {
-            return;
-        }
         while (!pivotResult.getMissingDimensions().isEmpty()) {
             Clock missingDimension = pivotResult.getMissingDimensions().get(0);
             Collection<TwoClockConstraint> twoClockConstraints =
                     constraintZone.getTCConstraintByPrimary(missingDimension);
             SingleClockConstraint dimensionMax = constraintZone.getMaxConstraint(missingDimension);
+            Double oldValue = pivot.getCoordinate(missingDimension);
             //A TCC is eligible for addition if it was not used earlier and it will make dimension greater,
             //but not greater than the max of that dimension
             twoClockConstraints.removeIf(tcc -> {
@@ -54,7 +53,6 @@ public class Zone {
                             return true;
                         }
                         Double tccValue = getTCCValue(pivot, tcc);
-                        Double oldValue = pivot.getCoordinate(missingDimension);
                         return tccValue <= oldValue || tccValue >= dimensionMax.getnValue();
                     });
 

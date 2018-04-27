@@ -20,6 +20,9 @@ public class Projector2D extends Projector {
 
     @Override
     public Collection<WorldPolygon> project(Zone zone) {
+        if (zone.getVertices().isEmpty()) {
+            return new ArrayList<>();
+        }
         List<Vector3> projectedVertices = new ArrayList<>();
 
         for (Vertex vertex : zone.getVertices()) {

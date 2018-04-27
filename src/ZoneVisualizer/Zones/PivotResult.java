@@ -2,6 +2,8 @@ package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
+import ZoneVisualizer.Constraints.SingleClockConstraint;
+import ZoneVisualizer.Constraints.TwoClockConstraint;
 import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
@@ -13,8 +15,9 @@ public class PivotResult {
     private List<Clock> missingDimensions;
     private Collection<VertexPotential> vertexPotentials;
 
-    private Map<Clock, Collection<VertexPotential>> resolutionCandidates = new HashMap<>();
-    private Map<Clock, Collection<VertexPotential>> deniedCandidates = new HashMap<>();
+    private final Map<Clock, Collection<VertexPotential>> resolutionCandidates = new HashMap<>();
+    private final Map<Clock, Collection<VertexPotential>> reversionCandidates = new HashMap<>();
+    private final Map<Clock, Collection<VertexPotential>> additionCandidates = new HashMap<>();
 
     public PivotResult(Vertex vertex, List<Clock> missingDimensions, Collection<VertexPotential> vertexPotentials) {
         this.vertex = vertex;
@@ -61,24 +64,41 @@ public class PivotResult {
                 .filter(p -> p.getOldDimension() == dimension)
                 .collect(Collectors.toList());
         if (resolveCandidates.isEmpty()) {
-            Collection<VertexPotential> resolveDeniedCandidates = getAllDeniedCandidates().stream()
+            Collection<VertexPotential> resolveReversionCandidates = getAllReversionCandidates().stream()
                     .filter(c -> c.getNewDimension() == dimension)
                     .collect(Collectors.toList());
-            if (resolveCandidates.isEmpty()) {
+            if (resolveReversionCandidates.isEmpty()) {
                 vertex.addConstraints(dimension, constraints);
             }
             else {
-                resolveDeniedWithConstraints(constraints, resolveDeniedCandidates);
+                resolveReversionsWithConstraints(constraints, resolveReversionCandidates);
             }
             return;
         }
-        if (Double.isFinite(LINQ.first(constraints).getnValue())) {
+        Constraint first = LINQ.first(constraints);
+        if (Double.isFinite(first.getnValue())) {
+            if (first instanceof TwoClockConstraint) {
+                TwoClockConstraint tcc = (TwoClockConstraint)first;
+                Clock otherClock = tcc.getOtherClock(dimension);
+                Collection<Constraint> edgeConstraints = vertex.getConstraints(otherClock);
+                if (!LINQ.first(edgeConstraints).isLowerBoundOnDimension(otherClock)) {
+                    Collection<VertexPotential> potentials = new ArrayList<>();
+                    potentials.addAll(constraints.stream()
+                            .map(c -> (TwoClockConstraint)c)
+                            .map(c -> new VertexPotential(c, dimension, c.getOtherClock(dimension)))
+                            .collect(Collectors.toList()));
+                    potentials.forEach(p -> p.setResolution(edgeConstraints));
+                    potentials.addAll(resolveCandidates);
+                    vertexPotentials.removeAll(resolveCandidates);
+                    return;
+                }
+            }
             resolveWithConstraints(constraints, resolveCandidates);
-            resolveDeniedWithConstraints(dimension, constraints);
+            resolveReversionsWithConstraints(dimension, constraints);
             return;
         }
 
-        deniedCandidates.put(dimension, resolveCandidates);
+        reversionCandidates.put(dimension, resolveCandidates);
         vertexPotentials.removeAll(resolveCandidates);
         for (VertexPotential candidate : resolveCandidates) {
             Clock missingDimension = candidate.getNewDimension();
@@ -92,8 +112,8 @@ public class PivotResult {
                 missingDimensions.add(missingDimension);
             }
         }
-        if (deniedResolutionReady(dimension)) {
-            resolveDimension(dimension, deniedCandidates);
+        if (reversionResolutionReady(dimension)) {
+            resolveDimension(dimension, reversionCandidates);
         }
     }
 
@@ -109,26 +129,26 @@ public class PivotResult {
         }
     }
 
-    private void resolveDeniedWithConstraints(Clock dimension, Collection<? extends Constraint> constraints) {
-        Collection<VertexPotential> resolveDeniedCandidates = getAllDeniedCandidates().stream()
+    private void resolveReversionsWithConstraints(Clock dimension, Collection<? extends Constraint> constraints) {
+        Collection<VertexPotential> resolveDeniedCandidates = getAllReversionCandidates().stream()
                 .filter(c -> c.getNewDimension() == dimension)
                 .collect(Collectors.toList());
-        resolveDeniedWithConstraints(constraints, resolveDeniedCandidates);
+        resolveReversionsWithConstraints(constraints, resolveDeniedCandidates);
     }
 
-    private void resolveDeniedWithConstraints(Collection<? extends Constraint> constraints,
-                                              Collection<VertexPotential> resolveDeniedPotentials) {
+    private void resolveReversionsWithConstraints(Collection<? extends Constraint> constraints,
+                                                  Collection<VertexPotential> resolveDeniedPotentials) {
         for (VertexPotential deniedCandidate : resolveDeniedPotentials) {
             deniedCandidate.setResolution(constraints);
             Clock oldDimension = deniedCandidate.getOldDimension();
-            if (deniedResolutionReady(oldDimension)) {
-                resolveDimension(oldDimension, deniedCandidates);
+            if (reversionResolutionReady(oldDimension)) {
+                resolveDimension(oldDimension, reversionCandidates);
             }
         }
     }
 
-    private Collection<VertexPotential> getAllDeniedCandidates() {
-        return deniedCandidates.values().stream().flatMap(c -> c.stream()).collect(Collectors.toList());
+    private Collection<VertexPotential> getAllReversionCandidates() {
+        return reversionCandidates.values().stream().flatMap(c -> c.stream()).collect(Collectors.toList());
     }
 
     private void resolveDimension(Clock dimension, Map<Clock, Collection<VertexPotential>> candidatesToFinish) {
@@ -142,6 +162,7 @@ public class PivotResult {
             vertex.addConstraints(potential.getOtherDimension(dimension), potential.getResolution());
         }
         for (VertexPotential potential : resolvedPotentials) {
+            //Todo unless dimension is handled
             vertex.addConstraint(potential.getOtherDimension(dimension), potential.getConstraint());
         }
     }
@@ -157,11 +178,11 @@ public class PivotResult {
         return vertexPotentials.stream().noneMatch(p -> p.getNewDimension() == newDimension);
     }
 
-    private boolean deniedResolutionReady(Clock dimension) {
-        if (!deniedCandidates.containsKey(dimension)) {
+    private boolean reversionResolutionReady(Clock dimension) {
+        if (!reversionCandidates.containsKey(dimension)) {
             return false;
         }
-        return deniedCandidates.get(dimension).stream().allMatch(c -> c.getResolution() != null);
+        return reversionCandidates.get(dimension).stream().allMatch(c -> c.getResolution() != null);
     }
 
 

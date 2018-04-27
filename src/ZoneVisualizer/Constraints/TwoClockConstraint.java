@@ -107,6 +107,11 @@ public class TwoClockConstraint extends Constraint {
         return Arrays.asList(clock1, clock2);
     }
 
+    @Override
+    public boolean isLowerBoundOnDimension(Clock dimension) {
+        return dimension == clock2;
+    }
+
     public void setRestrictionType(TwoClockRestrictionType restrictionType) {
         if (restrictionType != TwoClockRestrictionType.NotFound) {
             this.restrictionType = restrictionType;

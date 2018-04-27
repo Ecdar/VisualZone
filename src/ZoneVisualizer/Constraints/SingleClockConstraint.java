@@ -49,6 +49,11 @@ public class SingleClockConstraint extends Constraint {
     }
 
     @Override
+    public boolean isLowerBoundOnDimension(Clock dimension) {
+        return dimension == clock;
+    }
+
+    @Override
     public String toString() {
         return clock.getName() + " " + super.toString();
     }
