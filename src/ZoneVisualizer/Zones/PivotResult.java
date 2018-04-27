@@ -17,7 +17,6 @@ public class PivotResult {
 
     private final Map<Clock, Collection<VertexPotential>> resolutionCandidates = new HashMap<>();
     private final Map<Clock, Collection<VertexPotential>> reversionCandidates = new HashMap<>();
-    private final Map<Clock, Collection<VertexPotential>> additionCandidates = new HashMap<>();
 
     public PivotResult(Vertex vertex, List<Clock> missingDimensions, Collection<VertexPotential> vertexPotentials) {
         this.vertex = vertex;
@@ -75,24 +74,7 @@ public class PivotResult {
             }
             return;
         }
-        Constraint first = LINQ.first(constraints);
-        if (Double.isFinite(first.getnValue())) {
-            if (first instanceof TwoClockConstraint) {
-                TwoClockConstraint tcc = (TwoClockConstraint)first;
-                Clock otherClock = tcc.getOtherClock(dimension);
-                Collection<Constraint> edgeConstraints = vertex.getConstraints(otherClock);
-                if (!LINQ.first(edgeConstraints).isLowerBoundOnDimension(otherClock)) {
-                    Collection<VertexPotential> potentials = new ArrayList<>();
-                    potentials.addAll(constraints.stream()
-                            .map(c -> (TwoClockConstraint)c)
-                            .map(c -> new VertexPotential(c, dimension, c.getOtherClock(dimension)))
-                            .collect(Collectors.toList()));
-                    potentials.forEach(p -> p.setResolution(edgeConstraints));
-                    potentials.addAll(resolveCandidates);
-                    vertexPotentials.removeAll(resolveCandidates);
-                    return;
-                }
-            }
+        if (Double.isFinite(LINQ.first(constraints).getnValue())) {
             resolveWithConstraints(constraints, resolveCandidates);
             resolveReversionsWithConstraints(dimension, constraints);
             return;
@@ -159,11 +141,14 @@ public class PivotResult {
         resolvedPotentials.removeAll(minimumCandidates);
         vertex.addConstraints(dimension, minimumCandidates.stream().map(VertexPotential::getConstraint).collect(Collectors.toList()));
         for (VertexPotential potential : minimumCandidates) {
-            vertex.addConstraints(potential.getOtherDimension(dimension), potential.getResolution());
+            if (vertex.getConstraints(potential.getOtherDimension(dimension)).isEmpty()) {
+                vertex.addConstraints(potential.getOtherDimension(dimension), potential.getResolution());
+            }
         }
         for (VertexPotential potential : resolvedPotentials) {
-            //Todo unless dimension is handled
-            vertex.addConstraint(potential.getOtherDimension(dimension), potential.getConstraint());
+            if (vertex.getConstraints(potential.getOtherDimension(dimension)).isEmpty()) {
+                vertex.addConstraint(potential.getOtherDimension(dimension), potential.getConstraint());
+            }
         }
     }
 

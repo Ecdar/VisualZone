@@ -43,7 +43,7 @@ public class Vertex {
                 Clock nonKey = tcc.getOtherClock(entry.getKey());
                 if (nonKey == clock) {
                     //This TCC is likely to change dimension
-                    potentials.add(new VertexPotential(tcc, entry.getKey(), nonKey));
+                    potentials.add(new VertexPotential(tcc));
                     missingDimensions.add(entry.getKey());
                     continue;
                 }
@@ -57,7 +57,7 @@ public class Vertex {
                     throw new IllegalStateException("Two Clock Constraint was not expected to bound " + tcc.getClock1());
                 }
                 //This TCC might change dimension back to bounding it's clock1 if another TCC changes dimension to bound it's clock2
-                potentials.add(new VertexPotential(tcc, nonKey, entry.getKey()));
+                potentials.add(new VertexPotential(tcc));
                 continue;
             }
             //Todo handle degenerate case

@@ -10,13 +10,9 @@ public class VertexPotential {
 
     private final TwoClockConstraint constraint;
     private Collection<? extends Constraint> resolution;
-    private final Clock oldDimension;
-    private final Clock newDimension;
 
-    public VertexPotential(TwoClockConstraint constraint, Clock oldDimension, Clock newDimension) {
+    public VertexPotential(TwoClockConstraint constraint) {
         this.constraint = constraint;
-        this.oldDimension = oldDimension;
-        this.newDimension = newDimension;
     }
 
     public TwoClockConstraint getConstraint() {
@@ -24,11 +20,11 @@ public class VertexPotential {
     }
 
     public Clock getOldDimension() {
-        return oldDimension;
+        return constraint.getClock1();
     }
 
     public Clock getNewDimension() {
-        return newDimension;
+        return constraint.getClock2();
     }
 
     public Collection<? extends Constraint> getResolution() {
@@ -40,13 +36,7 @@ public class VertexPotential {
     }
 
     public Clock getOtherDimension(Clock clock) {
-        if (clock == newDimension) {
-            return oldDimension;
-        }
-        if (clock == oldDimension) {
-            return newDimension;
-        }
-        return null;
+        return constraint.getOtherClock(clock);
     }
 
     @Override
