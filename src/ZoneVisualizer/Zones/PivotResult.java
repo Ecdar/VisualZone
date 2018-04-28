@@ -2,8 +2,6 @@ package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
-import ZoneVisualizer.Constraints.SingleClockConstraint;
-import ZoneVisualizer.Constraints.TwoClockConstraint;
 import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
@@ -38,7 +36,7 @@ public class PivotResult {
                     .filter(c -> c.getNewDimension() == dimension)
                     .collect(Collectors.toList());
             if (resolveReversionCandidates.isEmpty()) {
-                vertex.addConstraints(dimension, constraints);
+                chainResolvePotentials(dimension, constraints);
             }
             else {
                 resolveReversionsWithConstraints(constraints, resolveReversionCandidates);
@@ -110,17 +108,32 @@ public class PivotResult {
         //Todo there is a problem here when there are multiple potentials and a resolution is also a TCC
         Collection<VertexPotential> minimumCandidates = LINQ.getMinimums(resolvedPotentials, p -> resolveValue(p, dimension));
         resolvedPotentials.removeAll(minimumCandidates);
-        vertex.addConstraints(dimension, minimumCandidates.stream().map(VertexPotential::getConstraint).collect(Collectors.toList()));
+        vertex.addConstraints(dimension, minimumCandidates.stream()
+                .map(VertexPotential::getConstraint).collect(Collectors.toList()));
         for (VertexPotential potential : minimumCandidates) {
-            if (vertex.getConstraints(potential.getOtherDimension(dimension)).isEmpty()) {
-                vertex.addConstraints(potential.getOtherDimension(dimension), potential.getResolution());
+            Clock otherDimension = potential.getOtherDimension(dimension);
+            if (vertex.getConstraints(otherDimension).isEmpty()) {
+                chainResolvePotentials(otherDimension, potential.getResolution());
             }
         }
         for (VertexPotential potential : resolvedPotentials) {
-            if (vertex.getConstraints(potential.getOtherDimension(dimension)).isEmpty()) {
-                vertex.addConstraint(potential.getOtherDimension(dimension), potential.getConstraint());
+            Clock otherDimension = potential.getOtherDimension(dimension);
+            if (vertex.getConstraints(otherDimension).isEmpty()) {
+                chainResolvePotentials(otherDimension, potential.getConstraint());
             }
         }
+    }
+
+    private void chainResolvePotentials(Clock dimension, Constraint constraint) {
+        chainResolvePotentials(dimension, Arrays.asList(constraint));
+    }
+
+    private void chainResolvePotentials(Clock dimension, Collection<? extends Constraint> constraints) {
+        vertex.addConstraints(dimension, constraints);
+        List<VertexPotential> chainFinishPotentials = vertexPotentials.stream()
+                .filter(p -> p.getNewDimension() == dimension).collect(Collectors.toList());
+        vertexPotentials.removeAll(chainFinishPotentials);
+        chainFinishPotentials.forEach(p -> chainResolvePotentials(p.getOldDimension(), p.getConstraint()));
     }
 
     private double resolveValue(VertexPotential potential, Clock dimension) {
