@@ -50,7 +50,7 @@ public class SingleClockConstraint extends Constraint {
 
     @Override
     public boolean isLowerBoundOnDimension(Clock dimension) {
-        return dimension == clock;
+        return inequality == Inequality.GreaterThan && dimension == clock;
     }
 
     @Override

@@ -18,10 +18,7 @@ public class Vertex {
 
     public PivotResult pivot(Clock clock) {
         Constraint removingConstraint = LINQ.first(constraints.get(clock));
-        if ((removingConstraint instanceof SingleClockConstraint &&
-             removingConstraint.getInequality() == Inequality.LessThan) ||
-            (removingConstraint instanceof TwoClockConstraint &&
-             ((TwoClockConstraint)removingConstraint).getClock1() == clock)) {
+        if (!removingConstraint.isLowerBoundOnDimension(clock)) {
             //Dimension wont be maximized by removing this constraint
             return null;
         }
@@ -52,9 +49,6 @@ public class Vertex {
                     //Trivial case where TCC meets SCC
                     newVertex.addConstraint(entry.getKey(), tcc);
                     continue;
-                }
-                if (entry.getKey() == tcc.getClock1()) {
-                    throw new IllegalStateException("Two Clock Constraint was not expected to bound " + tcc.getClock1());
                 }
                 //This TCC might change dimension back to bounding it's clock1 if another TCC changes dimension to bound it's clock2
                 potentials.add(new VertexPotential(tcc));

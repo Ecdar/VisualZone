@@ -21,36 +21,7 @@ public class PivotResult {
     public PivotResult(Vertex vertex, List<Clock> missingDimensions, Collection<VertexPotential> vertexPotentials) {
         this.vertex = vertex;
         this.missingDimensions = missingDimensions;
-        this.vertexPotentials = new ArrayList<>();
-        fillVertexPotentials(vertex, missingDimensions, vertexPotentials);
-    }
-
-    private void fillVertexPotentials(Vertex vertex, List<Clock> missingDimensions, Collection<VertexPotential> vertexPotentials) {
-        Map<Clock, VertexPotential> trivialPotentials = new HashMap<>();
-        for (VertexPotential potential : vertexPotentials) {
-            Clock oldDimension = potential.getOldDimension();
-            if (missingDimensions.contains(oldDimension)) {
-                this.vertexPotentials.add(potential);
-                continue;
-            }
-            if (!trivialPotentials.containsKey(oldDimension)) {
-                trivialPotentials.put(oldDimension, potential);
-            }
-            else {
-                VertexPotential previous = trivialPotentials.get(oldDimension);
-                if  (previous != null) {
-                    this.vertexPotentials.add(previous);
-                    trivialPotentials.put(oldDimension, null);
-                }
-                this.vertexPotentials.add(potential);
-            }
-        }
-        for (VertexPotential trivialPotential : trivialPotentials.values()) {
-            if (trivialPotential == null) {
-                continue;
-            }
-            vertex.addConstraint(trivialPotential.getNewDimension(), trivialPotential.getConstraint());
-        }
+        this.vertexPotentials = vertexPotentials;
     }
 
     public void addMissingConstraint(Clock dimension, Constraint... constraints) {
