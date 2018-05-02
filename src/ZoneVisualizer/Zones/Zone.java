@@ -48,6 +48,7 @@ public class Zone {
             Double oldValue = pivot.getCoordinate(missingDimension);
             //A TCC is eligible for addition if it was not used earlier and it will make dimension greater,
             //but not greater than the max of that dimension
+            //Todo this can gives the wrong result when following 2 tcc's
             twoClockConstraints.removeIf(tcc -> {
                         if(pivot.getAllConstraints().contains(tcc)) {
                             return true;
