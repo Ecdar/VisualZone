@@ -2,6 +2,7 @@ package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
+import ZoneVisualizer.Constraints.TwoClockConstraint;
 import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
@@ -69,13 +70,29 @@ public class PivotResult {
     }
 
     private void resolveWithConstraints(Collection<? extends Constraint> constraints, Collection<VertexPotential> resolveCandidates) {
-        for (VertexPotential candidate : new ArrayList<>(resolveCandidates)) {
-            candidate.setResolution(constraints);
-            vertexPotentials.remove(candidate);
-            Clock newDimension = candidate.getNewDimension();
-            LINQ.addToDeepMap(resolutionCandidates, newDimension, candidate);
-            if (candidatesResolutionReady(newDimension)) {
-                resolveDimension(newDimension, resolutionCandidates);
+        if (constraints.stream().allMatch(c -> c instanceof TwoClockConstraint)) {
+            for (Constraint constraint : constraints) {
+                TwoClockConstraint tcc = (TwoClockConstraint) constraint;
+                VertexPotential newPotential = new VertexPotential(tcc);
+                newPotential.setResolution(vertex.getConstraints(tcc.getClock2()));
+                LINQ.addToDeepMap(reversionCandidates, tcc.getClock1(), newPotential);
+            }
+            for (VertexPotential candidate : resolveCandidates) {
+                vertexPotentials.remove(candidate);
+                Clock oldDimension = candidate.getOldDimension();
+                LINQ.addToDeepMap(reversionCandidates, oldDimension, candidate);
+                missingDimensions.add(candidate.getNewDimension());
+            }
+        }
+        else {
+            for (VertexPotential candidate : new ArrayList<>(resolveCandidates)) {
+                candidate.setResolution(constraints);
+                vertexPotentials.remove(candidate);
+                Clock newDimension = candidate.getNewDimension();
+                LINQ.addToDeepMap(resolutionCandidates, newDimension, candidate);
+                if (candidatesResolutionReady(newDimension)) {
+                    resolveDimension(newDimension, resolutionCandidates);
+                }
             }
         }
     }
@@ -131,7 +148,8 @@ public class PivotResult {
     private void chainResolvePotentials(Clock dimension, Collection<? extends Constraint> constraints) {
         vertex.addConstraints(dimension, constraints);
         List<VertexPotential> chainFinishPotentials = vertexPotentials.stream()
-                .filter(p -> p.getNewDimension() == dimension).collect(Collectors.toList());
+                .filter(p -> p.getNewDimension() == dimension)
+                .collect(Collectors.toList());
         vertexPotentials.removeAll(chainFinishPotentials);
         chainFinishPotentials.forEach(p -> chainResolvePotentials(p.getOldDimension(), p.getConstraint()));
     }
