@@ -6,7 +6,7 @@ import ZoneVisualizer.Utility.LINQ;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Vertex implements Cloneable {
+public class Vertex {
 
     private final Map<Clock, Set<Constraint>> constraints;
     private final Map<Clock, Double> coordinates;
@@ -49,7 +49,7 @@ public class Vertex implements Cloneable {
             //Todo handle degenerate case
         }
 
-        return new PivotResult(newVertex, clock, twoClockConstraints);
+        return new PivotResult(this, newVertex, clock, twoClockConstraints);
     }
 
     public Collection<Constraint> getConstraints(Clock key) {
@@ -150,13 +150,8 @@ public class Vertex implements Cloneable {
                 .reduce((s1, s2) -> s1 + ", " + s2).get();
     }
 
-    @Override
-    public Object clone() {
-        return getClone();
-    }
-
     public Vertex getClone() {
-        return new Vertex(constraints, coordinates, degenerate);
+        return new Vertex(new HashMap<>(constraints), new HashMap<>(coordinates), degenerate);
     }
 
     public static class VertexComparator implements Comparator<Vertex> {
