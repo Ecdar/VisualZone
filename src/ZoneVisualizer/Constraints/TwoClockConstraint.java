@@ -38,6 +38,10 @@ public class TwoClockConstraint extends Constraint {
         return null;
     }
 
+    public boolean hasClock(Clock clock) {
+        return clock1.equals(clock) || clock2.equals(clock);
+    }
+
     public double getOtherValue(Clock knownDimension, double knownValue) {
         if (knownDimension == getClock2()) {
             return getnValue() + knownValue;

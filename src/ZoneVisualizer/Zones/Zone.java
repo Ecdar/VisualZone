@@ -30,54 +30,13 @@ public class Zone {
             for (Clock clock : clocks) {
                 PivotResult pivotResult = pivot.pivot(clock);
                 if (pivotResult != null) {
-                    findMissingConstraintsAfterPivot(constraintZone, pivot, pivotResult);
+                    pivotResult.findMissingConstraints(constraintZone);
                 }
             }
             if (pivot.isDegenerate()) {
                 //Todo pivot along extra edges in degenerate case
             }
         }
-    }
-
-    private void findMissingConstraintsAfterPivot(ConstraintZone constraintZone, Vertex pivot, PivotResult pivotResult) {
-        while (!pivotResult.getMissingDimensions().isEmpty()) {
-            Clock missingDimension = pivotResult.getMissingDimensions().get(0);
-            Collection<TwoClockConstraint> twoClockConstraints =
-                    constraintZone.getTCConstraintByPrimary(missingDimension);
-            SingleClockConstraint dimensionMax = constraintZone.getMaxConstraint(missingDimension);
-            Double oldValue = pivot.getCoordinate(missingDimension);
-            //A TCC is eligible for addition if it was not used earlier and it will make dimension greater,
-            //but not greater than the max of that dimension
-            //Todo this can gives the wrong result when following 2 tcc's
-            twoClockConstraints.removeIf(tcc -> {
-                        if(pivot.getAllConstraints().contains(tcc)) {
-                            return true;
-                        }
-                        Double tccValue = getTCCValue(pivot, tcc);
-                        return tccValue <= oldValue || tccValue >= dimensionMax.getnValue();
-                    });
-
-            if (twoClockConstraints.isEmpty()) {
-                pivotResult.addMissingConstraint(missingDimension, dimensionMax);
-                continue;
-            }
-
-            //Calculating the TCC values again unnecessarily, probably better to save them
-            Collection<TwoClockConstraint> minMaxConstraints =
-                    LINQ.getMinimums(twoClockConstraints, tcc -> getTCCValue(pivot, tcc));
-
-            pivotResult.addMissingConstraints(missingDimension, minMaxConstraints);
-        }
-
-        if (!vertices.contains(pivotResult.getVertex())) {
-            addVertex(pivotResult.getVertex());
-        }
-    }
-
-    //What value would ttc.clock2 have if this TCC was used as upper bound in this vertex instead of whats there now
-    private Double getTCCValue(Vertex vertex, TwoClockConstraint tcc) {
-        double knownValue = vertex.getCoordinate(tcc.getClock2());
-        return tcc.getOtherValue(tcc.getClock2(), knownValue);
     }
 
     private void addVertex(Vertex vertex) {

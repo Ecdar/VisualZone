@@ -6,14 +6,22 @@ import ZoneVisualizer.Utility.LINQ;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Vertex {
+public class Vertex implements Cloneable {
 
-    private final Map<Clock, Set<Constraint>> constraints = new HashMap<>();
-    private final Map<Clock, Double> coordinates = new HashMap<>();
+    private final Map<Clock, Set<Constraint>> constraints;
+    private final Map<Clock, Double> coordinates;
     private boolean degenerate;
 
     public Vertex(Collection<Clock> dimensions) {
+        constraints = new HashMap<>();
+        coordinates = new HashMap<>();
         dimensions.forEach(c -> constraints.put(c, new HashSet<>()));
+    }
+
+    private Vertex(Map<Clock, Set<Constraint>> constraints, Map<Clock, Double> coordinates, boolean degenerate) {
+        this.constraints = constraints;
+        this.coordinates = coordinates;
+        this.degenerate = degenerate;
     }
 
     public PivotResult pivot(Clock clock) {
@@ -24,8 +32,7 @@ public class Vertex {
         }
 
         Vertex newVertex = new Vertex(constraints.keySet());
-        List<Clock> missingDimensions = new ArrayList<>();
-        Collection<VertexPotential> potentials = new ArrayList<>();
+        Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>();
         for (Map.Entry<Clock, Set<Constraint>> entry : constraints.entrySet()) {
             if (entry.getKey() == clock) {
                 continue;
@@ -36,31 +43,13 @@ public class Vertex {
                     newVertex.addConstraint(entry.getKey(), c);
                     continue;
                 }
-                TwoClockConstraint tcc = (TwoClockConstraint)c;
-                Clock nonKey = tcc.getOtherClock(entry.getKey());
-                if (nonKey == clock) {
-                    //This TCC is likely to change dimension
-                    potentials.add(new VertexPotential(tcc));
-                    missingDimensions.add(entry.getKey());
-                    continue;
-                }
-                Constraint otherBound = LINQ.first(constraints.get(nonKey));
-                if (otherBound instanceof SingleClockConstraint) {
-                    //Trivial case where TCC meets SCC
-                    newVertex.addConstraint(entry.getKey(), tcc);
-                    continue;
-                }
-                //This TCC might change dimension back to bounding it's clock1 if another TCC changes dimension to bound it's clock2
-                potentials.add(new VertexPotential(tcc));
+                twoClockConstraints.add((TwoClockConstraint)c);
                 continue;
             }
             //Todo handle degenerate case
         }
-        if (missingDimensions.isEmpty()) {
-            missingDimensions.add(clock);
-        }
 
-        return new PivotResult(newVertex, missingDimensions, potentials);
+        return new PivotResult(newVertex, clock, twoClockConstraints);
     }
 
     public Collection<Constraint> getConstraints(Clock key) {
@@ -114,6 +103,13 @@ public class Vertex {
         return tcc.getOtherValue(otherClock, otherValue);
     }
 
+    public Collection<Clock> getKnownDimensions() {
+        return constraints.entrySet().stream()
+                .filter(entry -> !entry.getValue().isEmpty())
+                .map(entry -> entry.getKey())
+                .collect(Collectors.toList());
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (super.equals(obj)) {
@@ -152,6 +148,15 @@ public class Vertex {
         return allConstraints.stream()
                 .map(c -> c.toString())
                 .reduce((s1, s2) -> s1 + ", " + s2).get();
+    }
+
+    @Override
+    public Object clone() {
+        return getClone();
+    }
+
+    public Vertex getClone() {
+        return new Vertex(constraints, coordinates, degenerate);
     }
 
     public static class VertexComparator implements Comparator<Vertex> {
