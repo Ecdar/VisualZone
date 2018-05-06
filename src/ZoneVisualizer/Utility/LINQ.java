@@ -70,6 +70,9 @@ public class LINQ {
     }
 
     public static <T> Collection<T> getMinimums(Collection<? extends T> collection, Function<T, Double> valueFunction) {
+        if (collection.isEmpty()) {
+            return new ArrayList<>();
+        }
         Collection<T> minimumCandidates = new ArrayList<>();
         Iterator<? extends T> iterator = collection.iterator();
         T first = iterator.next();
