@@ -62,6 +62,10 @@ public class Vertex {
                 .collect(Collectors.toSet());
     }
 
+    public boolean knowsDimension(Clock dimension) {
+        return !constraints.get(dimension).isEmpty();
+    }
+
     public void addConstraint(Clock key, Constraint value) {
         constraints.get(key).add(value);
         if (constraints.get(key).size() > 1) {

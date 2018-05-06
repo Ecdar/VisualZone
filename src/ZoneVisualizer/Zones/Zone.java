@@ -22,7 +22,7 @@ public class Zone {
         }
 
         Vertex origin = findOrigin(constraintZone, clocks);
-        addVertex(origin);
+        tryAddVertex(origin);
 
         for (int i = 0; i < vertices.size(); i++) {
             Vertex pivot = vertices.get(i);
@@ -31,6 +31,8 @@ public class Zone {
                 PivotResult pivotResult = pivot.pivot(clock);
                 if (pivotResult != null) {
                     pivotResult.findMissingConstraints(constraintZone);
+                    Vertex vertex = pivotResult.getVertex();
+                    tryAddVertex(vertex);
                 }
             }
             if (pivot.isDegenerate()) {
@@ -39,7 +41,10 @@ public class Zone {
         }
     }
 
-    private void addVertex(Vertex vertex) {
+    private void tryAddVertex(Vertex vertex) {
+        if (vertices.contains(vertex)) {
+            return;
+        }
         vertices.add(vertex);
         int index = vertices.size() - 1;
         for (Constraint constraint : vertex.getAllConstraints()) {

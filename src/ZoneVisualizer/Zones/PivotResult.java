@@ -11,15 +11,19 @@ import java.util.stream.Collectors;
 
 public class PivotResult {
 
-    private Vertex fromPivot;
+    private final Vertex fromPivot;
     private Vertex vertex;
     private Clock missingDimension;
-    private Collection<TwoClockConstraint> freeTwoClockConstraints;
+    private final Collection<TwoClockConstraint> freeTwoClockConstraints;
+    private final Collection<Constraint> fromPivotConstraints;
+    private final Collection<TwoClockConstraint> initialTwoClockConstraints;
 
     public PivotResult(Vertex fromPivot, Vertex vertex, Clock missingDimension, Collection<TwoClockConstraint> twoClockConstraints) {
         this.fromPivot = fromPivot;
+        this.fromPivotConstraints = fromPivot.getAllConstraints();
         this.vertex = vertex;
         this.missingDimension = missingDimension;
+        this.initialTwoClockConstraints = new ArrayList<>(twoClockConstraints);
         //Find TwoClockConstraints that can only bound one dimension
         List<Clock> knownDimensions = new ArrayList<>(vertex.getKnownDimensions());
         for (int i = 0; i < knownDimensions.size(); i++) {
@@ -38,85 +42,104 @@ public class PivotResult {
     }
 
     public void findMissingConstraints(ConstraintZone constraintZone) {
-        Map<Map<Clock, Constraint>, Double> potentials = new HashMap<>();
+        Map<Map<Clock, Collection<Constraint>>, Double> potentials = new HashMap<>();
+        double oldValue = fromPivot.getCoordinate(missingDimension);
         //Find potential vertices for existing tcc's
         for (TwoClockConstraint potential : freeTwoClockConstraints.stream()
                 .filter(c -> c.hasClock(missingDimension))
                 .collect(Collectors.toList())) {
             Clock otherClock = potential.getOtherClock(missingDimension);
-            Map<Clock, Constraint> potentialAdditions = new HashMap<>();
-            potentialAdditions.put(missingDimension, potential);
-            potentialAdditions.put(otherClock, constraintZone.getMaxConstraint(otherClock));
+            Map<Clock, Collection<Constraint>> potentialAdditions = new HashMap<>();
+            LINQ.addToDeepMap(potentialAdditions, missingDimension, potential);
+            Collection<Constraint> opposites = getMaxOfDimension(constraintZone, otherClock);
+            LINQ.addAllToDeepMap(potentialAdditions, otherClock, opposites);
+
             for (TwoClockConstraint tcc : freeTwoClockConstraints) {
                 if (tcc.equals(potential)) {
                     continue;
                 }
                 Clock key = tcc.getOtherClock(missingDimension);
-                potentialAdditions.put(key, tcc);
+                LINQ.addToDeepMap(potentialAdditions, key, tcc);
             }
-            potentials.put(potentialAdditions, getValuation(potentialAdditions, missingDimension));
+            double valuation = getValuation(potentialAdditions, missingDimension);
+            if (valuation > oldValue) {
+                potentials.put(potentialAdditions, valuation);
+            }
         }
-        Map<Clock, Constraint> potentialAdditions = new HashMap<>();
+        Map<Clock, Collection<Constraint>> potentialAdditions = new HashMap<>();
         for (TwoClockConstraint tcc : freeTwoClockConstraints) {
             Clock key = tcc.getOtherClock(missingDimension);
-            potentialAdditions.put(key, tcc);
+            LINQ.addToDeepMap(potentialAdditions, key, tcc);
         }
         //Find potential vertex for max constraint
-        Map<Clock, Constraint> potentialMaxAdditions = new HashMap<>(potentialAdditions);
-        potentialMaxAdditions.put(missingDimension, constraintZone.getMaxConstraint(missingDimension));
-        potentials.put(potentialMaxAdditions, getValuation(potentialMaxAdditions, missingDimension));
+        Map<Clock, Collection<Constraint>> potentialMaxAdditions = new HashMap<>(potentialAdditions);
+        LINQ.addToDeepMap(potentialMaxAdditions, missingDimension, constraintZone.getMaxConstraint(missingDimension));
+        double valuation = getValuation(potentialMaxAdditions, missingDimension);
+        if (valuation > oldValue) {
+            potentials.put(potentialMaxAdditions, valuation);
+        }
         //Find potential vertices for Two Clock max bounds
-        Collection<TwoClockConstraint> twoClockConstraints = constraintZone.getTCConstraintByPrimary(missingDimension);
-        twoClockConstraints.removeAll(freeTwoClockConstraints);
-        twoClockConstraints.removeAll(vertex.getAllConstraints());
+        Collection<TwoClockConstraint> twoClockConstraints = getEligibleTCCs(constraintZone, missingDimension);
         for (TwoClockConstraint tcc : twoClockConstraints) {
-            Map<Clock, Constraint> tccPotential = new HashMap<>(potentialAdditions);
-            tccPotential.put(missingDimension, tcc);
-            potentials.put(tccPotential, getValuation(tccPotential, missingDimension));
-        }
-        Collection<Map<Clock, Constraint>> minMaxBounds = LINQ.getMinimums(potentials.keySet(), p -> potentials.get(p));
-
-
-
-        //Old implementation
-        /*while (!pivotResult.getMissingDimensions().isEmpty()) {
-            Clock missingDimension = pivotResult.getMissingDimensions().get(0);
-            Collection<TwoClockConstraint> twoClockConstraints =
-                    constraintZone.getTCConstraintByPrimary(missingDimension);
-            SingleClockConstraint dimensionMax = constraintZone.getMaxConstraint(missingDimension);
-            Double oldValue = pivot.getCoordinate(missingDimension);
-            //A TCC is eligible for addition if it was not used earlier and it will make dimension greater,
-            //but not greater than the max of that dimension
-            //Todo this can gives the wrong result when following 2 tcc's
-            twoClockConstraints.removeIf(tcc -> {
-                        if(pivot.getAllConstraints().contains(tcc)) {
-                            return true;
-                        }
-                        Double tccValue = getTCCValue(pivot, tcc);
-                        return tccValue <= oldValue || tccValue >= dimensionMax.getnValue();
-                    });
-
-            if (twoClockConstraints.isEmpty()) {
-                pivotResult.addMissingConstraint(missingDimension, dimensionMax);
-                continue;
+            Map<Clock, Collection<Constraint>> tccPotential = new HashMap<>(potentialAdditions);
+            LINQ.addToDeepMap(tccPotential, missingDimension, tcc);
+            valuation = getValuation(tccPotential, missingDimension);
+            if (valuation > oldValue) {
+                potentials.put(tccPotential, valuation);
             }
-
-            //Calculating the TCC values again unnecessarily, probably better to save them
-            Collection<TwoClockConstraint> minMaxConstraints =
-                    LINQ.getMinimums(twoClockConstraints, tcc -> getTCCValue(pivot, tcc));
-
-            pivotResult.addMissingConstraints(missingDimension, minMaxConstraints);
         }
 
-        if (!vertices.contains(pivotResult.getVertex())) {
-            addVertex(pivotResult.getVertex());
-        }*/
+        //Find the smallest maximizing bound. It is the new constraint to add
+        Collection<Map<Clock, Collection<Constraint>>> minMaxBounds = LINQ.getMinimums(potentials.keySet(), potentials::get);
+        Collection<Constraint> newBoundsOnMissing = minMaxBounds.stream()
+                .flatMap(map -> map.get(missingDimension).stream())
+                .collect(Collectors.toList());
+        vertex.addConstraints(missingDimension, newBoundsOnMissing);
+        for (Map<Clock, Collection<Constraint>> minMaxBound : minMaxBounds) {
+            for (Map.Entry<Clock, Collection<Constraint>> bounds : minMaxBound.entrySet()) {
+                if (newBoundsOnMissing.containsAll(bounds.getValue())) {
+                    continue;
+                }
+                if (!vertex.knowsDimension(bounds.getKey())) {
+                    vertex.addConstraints(bounds.getKey(), bounds.getValue());
+                }
+            }
+        }
     }
 
-    private double getValuation(Map<Clock, Constraint> valueMap, Clock dimension) {
+    private Collection<Constraint> getMaxOfDimension(ConstraintZone constraintZone, Clock dimension) {
+        SingleClockConstraint max = constraintZone.getMaxConstraint(dimension);
+        if (Double.isFinite(max.getnValue())) {
+            return Arrays.asList(max);
+        }
+        Collection<TwoClockConstraint> twoClockConstraints = getEligibleTCCs(constraintZone, dimension);
+        Map<TwoClockConstraint, SingleClockConstraint> maximizingPair = new HashMap<>();
+        Collection<SingleClockConstraint> vertexSCC = LINQ.ofType(vertex.getAllConstraints());
+        for (TwoClockConstraint tcc : twoClockConstraints) {
+            Clock otherDimension = tcc.getOtherClock(dimension);
+            Optional<SingleClockConstraint> first = vertexSCC.stream().filter(c -> c.getClock().equals(otherDimension)).findFirst();
+            if (first.isPresent()) {
+                maximizingPair.put(tcc, first.get());
+            }
+        }
+        Collection<Map.Entry<TwoClockConstraint, SingleClockConstraint>> minMaxConstraints =
+                LINQ.getMinimums(maximizingPair.entrySet(), entry ->
+                        entry.getKey().getOtherValue(entry.getValue().getClock(), entry.getValue().getnValue()));
+        return minMaxConstraints.stream().map(entry -> entry.getKey()).collect(Collectors.toList());
+    }
+
+    private Collection<TwoClockConstraint> getEligibleTCCs(ConstraintZone constraintZone, Clock dimension) {
+        Collection<TwoClockConstraint> twoClockConstraints = constraintZone.getTCConstraintByPrimary(dimension);
+        twoClockConstraints.removeIf(tcc -> initialTwoClockConstraints.stream()
+                .anyMatch(init -> init.hasClock(tcc.getClock1()) && init.hasClock(tcc.getClock2())));
+        twoClockConstraints.removeAll(fromPivotConstraints);
+        return twoClockConstraints;
+    }
+
+    private double getValuation(Map<Clock, Collection<Constraint>> valueMap, Clock dimension) {
         Constraint c;
         if (valueMap.containsKey(dimension)) {
-            c = valueMap.get(dimension);
+            c = LINQ.first(valueMap.get(dimension));
         }
         else {
             c = LINQ.first(vertex.getConstraints(dimension));

@@ -62,6 +62,13 @@ public class LINQ {
         map.get(key).add(value);
     }
 
+    public static <TKey, TValue> void addAllToDeepMap(Map<TKey, Collection<TValue>> map, TKey key, Collection<TValue> values) {
+        if (!map.containsKey(key)) {
+            map.put(key, new ArrayList<>());
+        }
+        map.get(key).addAll(values);
+    }
+
     public static <T> Collection<T> getMinimums(Collection<? extends T> collection, Function<T, Double> valueFunction) {
         Collection<T> minimumCandidates = new ArrayList<>();
         Iterator<? extends T> iterator = collection.iterator();
