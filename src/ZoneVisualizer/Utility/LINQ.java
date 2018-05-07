@@ -1,11 +1,6 @@
 package ZoneVisualizer.Utility;
 
-import javafx.util.Pair;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -53,6 +48,29 @@ public class LINQ {
             }
         }
         return null;
+    }
+
+    public static <T> Collection<Set<T>> subsets(Collection<T> collection, int minimumSize) {
+        Collection<Set<T>> sets = new ArrayList<>();
+        if (collection.size() < minimumSize) {
+            return sets;
+        }
+        if (collection.size() == minimumSize || collection.isEmpty()) {
+            sets.add(new HashSet<>(collection));
+            return sets;
+        }
+        T head = first(collection);
+        List<T> rest = new ArrayList<>(collection);
+        rest.remove(head);
+        for (Set<T> subset : subsets(rest, minimumSize - 1)) {
+            Set<T> newSet = new HashSet<>(subset);
+            newSet.add(head);
+            sets.add(newSet);
+            if (subset.size() >= minimumSize) {
+                sets.add(subset);
+            }
+        }
+        return sets;
     }
 
     public static <TKey, TValue> void addToDeepMap(Map<TKey, Collection<TValue>> map, TKey key, TValue value) {

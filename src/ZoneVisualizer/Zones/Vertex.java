@@ -24,9 +24,9 @@ public class Vertex {
         this.degenerate = degenerate;
     }
 
-    public PivotResult pivot(Clock clock) {
-        Constraint removingConstraint = LINQ.first(constraints.get(clock));
-        if (!removingConstraint.isLowerBoundOnDimension(clock)) {
+    public PivotResult pivot(Clock pivotDimension) {
+        Constraint removingConstraint = LINQ.first(constraints.get(pivotDimension));
+        if (!removingConstraint.isLowerBoundOnDimension(pivotDimension)) {
             //Dimension wont be maximized by removing this constraint
             return null;
         }
@@ -34,7 +34,7 @@ public class Vertex {
         Vertex newVertex = new Vertex(constraints.keySet());
         Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>();
         for (Map.Entry<Clock, Set<Constraint>> entry : constraints.entrySet()) {
-            if (entry.getKey() == clock) {
+            if (entry.getKey() == pivotDimension) {
                 continue;
             }
             if (entry.getValue().size() == 1) {
@@ -46,10 +46,30 @@ public class Vertex {
                 twoClockConstraints.add((TwoClockConstraint)c);
                 continue;
             }
-            //Todo handle degenerate case
+            for (Constraint c : entry.getValue()) {
+                if (c instanceof SingleClockConstraint) {
+                    newVertex.addConstraint(entry.getKey(), c);
+                    continue;
+                }
+                TwoClockConstraint tcc = (TwoClockConstraint)c;
+                if (!tcc.hasClock(pivotDimension)) {
+                    newVertex.addConstraint(entry.getKey(), tcc);
+                }
+            }
         }
 
-        return new PivotResult(this, newVertex, clock, twoClockConstraints);
+        return new PivotResult(this, newVertex, pivotDimension, twoClockConstraints);
+    }
+
+    public Collection<PivotResult> degeneratePivot(Clock pivotDimension) {
+        Collection<PivotResult> results = new ArrayList<>();
+        Collection<Set<Constraint>> subsets = LINQ.subsets(constraints.get(pivotDimension), 2);
+        for (Set<Constraint> subset : subsets) {
+            Vertex newVertex = new Vertex(constraints.keySet());
+            Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>(LINQ.ofType(subset));
+            //Todo Find non degenerate constraints to add and create pivot result
+        }
+        return results;
     }
 
     public Collection<Constraint> getConstraints(Clock key) {
@@ -111,6 +131,14 @@ public class Vertex {
         return constraints.entrySet().stream()
                 .filter(entry -> !entry.getValue().isEmpty())
                 .map(entry -> entry.getKey())
+                .collect(Collectors.toList());
+    }
+
+    public Collection<Clock> getDegenerateDimensions() {
+        return constraints.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .map(entry -> entry.getKey())
+                .filter(c -> Double.isFinite(getCoordinate(c)))
                 .collect(Collectors.toList());
     }
 

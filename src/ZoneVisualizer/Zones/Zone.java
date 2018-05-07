@@ -36,7 +36,10 @@ public class Zone {
                 }
             }
             if (pivot.isDegenerate()) {
-                //Todo pivot along extra edges in degenerate case
+                for (Clock degenerateDimension : pivot.getDegenerateDimensions()) {
+                    //Todo pivot along extra edges in degenerate case
+
+                }
             }
         }
     }
