@@ -37,28 +37,34 @@ public class Vertex {
             if (entry.getKey() == pivotDimension) {
                 continue;
             }
-            if (entry.getValue().size() == 1) {
-                Constraint c = LINQ.first(entry.getValue());
-                if (c instanceof SingleClockConstraint) {
-                    newVertex.addConstraint(entry.getKey(), c);
-                    continue;
-                }
-                twoClockConstraints.add((TwoClockConstraint)c);
-                continue;
-            }
-            for (Constraint c : entry.getValue()) {
-                if (c instanceof SingleClockConstraint) {
-                    newVertex.addConstraint(entry.getKey(), c);
-                    continue;
-                }
-                TwoClockConstraint tcc = (TwoClockConstraint)c;
-                if (!tcc.hasClock(pivotDimension)) {
-                    newVertex.addConstraint(entry.getKey(), tcc);
-                }
-            }
+            tryAddConstraintsToVertex(pivotDimension, newVertex, twoClockConstraints, entry.getKey(), entry.getValue());
         }
 
         return new PivotResult(this, newVertex, pivotDimension, twoClockConstraints);
+    }
+
+    private void tryAddConstraintsToVertex(Clock pivotDimension, Vertex newVertex,
+                                           Collection<TwoClockConstraint> twoClockConstraints, Clock oldDimension,
+                                           Set<Constraint> oldConstraints) {
+        if (oldConstraints.size() == 1) {
+            Constraint c = LINQ.first(oldConstraints);
+            if (c instanceof SingleClockConstraint) {
+                newVertex.addConstraint(oldDimension, c);
+                return;
+            }
+            twoClockConstraints.add((TwoClockConstraint)c);
+            return;
+        }
+        for (Constraint c : oldConstraints) {
+            if (c instanceof SingleClockConstraint) {
+                newVertex.addConstraint(oldDimension, c);
+                continue;
+            }
+            TwoClockConstraint tcc = (TwoClockConstraint)c;
+            if (!tcc.hasClock(pivotDimension)) {
+                newVertex.addConstraint(oldDimension, tcc);
+            }
+        }
     }
 
     public Collection<PivotResult> degeneratePivot(Clock pivotDimension) {
@@ -67,7 +73,17 @@ public class Vertex {
         for (Set<Constraint> subset : subsets) {
             Vertex newVertex = new Vertex(constraints.keySet());
             Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>(LINQ.ofType(subset));
-            //Todo Find non degenerate constraints to add and create pivot result
+            Collection<Clock> handledDimensions = twoClockConstraints.stream()
+                    .map(tcc -> tcc.getOtherClock(pivotDimension))
+                    .collect(Collectors.toList());
+            Collection<Clock> missingDimensions = constraints.keySet();
+            missingDimensions.remove(pivotDimension);
+            missingDimensions.removeAll(handledDimensions);
+            for (Clock missingDimension : missingDimensions) {
+                Set<Constraint> oldConstraints = constraints.get(missingDimension);
+                tryAddConstraintsToVertex(pivotDimension, newVertex, twoClockConstraints, missingDimension, oldConstraints);
+            }
+            results.add(new PivotResult(this, newVertex, pivotDimension, twoClockConstraints));
         }
         return results;
     }

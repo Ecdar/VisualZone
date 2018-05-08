@@ -31,14 +31,16 @@ public class Zone {
                 PivotResult pivotResult = pivot.pivot(clock);
                 if (pivotResult != null) {
                     pivotResult.findMissingConstraints(constraintZone);
-                    Vertex vertex = pivotResult.getVertex();
-                    tryAddVertex(vertex);
+                    tryAddVertex(pivotResult.getVertex());
                 }
             }
             if (pivot.isDegenerate()) {
                 for (Clock degenerateDimension : pivot.getDegenerateDimensions()) {
-                    //Todo pivot along extra edges in degenerate case
-
+                    Collection<PivotResult> pivotResults = pivot.degeneratePivot(degenerateDimension);
+                    for (PivotResult pivotResult : pivotResults) {
+                        pivotResult.findMissingConstraints(constraintZone);
+                        tryAddVertex(pivotResult.getVertex());
+                    }
                 }
             }
         }
