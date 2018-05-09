@@ -47,41 +47,54 @@ public class Projector3D extends Projector {
         Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
         Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
 
+        List<Vector3> hullVertices = null;
         List<Vector3> planeVertices = projectedVertices.stream()
                 .filter(v -> v.x == minX)
                 .collect(Collectors.toList());
-        List<Vector3> hullVertices = getHullVerticesOfXPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.left()));
+        if (planeVertices.size() >= 3) {
+            hullVertices = getHullVerticesOfXPlane(planeVertices);
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.left()));
+        }
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.x == maxX)
                 .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfXPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.right()));
+        if (planeVertices.size() >= 3) {
+            hullVertices = getHullVerticesOfXPlane(planeVertices);
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.right()));
+        }
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.y == minY)
                 .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfYPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.down()));
+        if (planeVertices.size() >= 3) {
+            hullVertices = getHullVerticesOfYPlane(planeVertices);
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.down()));
+        }
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.y == maxY)
                 .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfYPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.up()));
+        if (planeVertices.size() >= 3) {
+            hullVertices = getHullVerticesOfYPlane(planeVertices);
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.up()));
+        }
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.z == minZ)
                 .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfZPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.back()));
+        if (planeVertices.size() >= 3) {
+            hullVertices = getHullVerticesOfZPlane(planeVertices);
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.back()));
+        }
 
         planeVertices = projectedVertices.stream()
                 .filter(v -> v.z == maxZ)
                 .collect(Collectors.toList());
-        hullVertices = getHullVerticesOfZPlane(planeVertices);
-        projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.forward()));
+        if (planeVertices.size() >= 3) {
+            hullVertices = getHullVerticesOfZPlane(planeVertices);
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.forward()));
+        }
 
         //Finds the two clock constraint faces (tilted faces)
         //(Doesn't reduce to hull vertices, so there will be more triangles than necessary)

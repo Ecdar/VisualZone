@@ -94,6 +94,7 @@ public class PivotResult {
                 .flatMap(map -> map.get(missingDimension).stream())
                 .collect(Collectors.toList());
         vertex.addConstraints(missingDimension, newBoundsOnMissing);
+        //Todo This doesn't work. Resolve new additions and remaining free TCC's in a different way
         for (Map<Clock, Collection<Constraint>> minMaxBound : minMaxBounds) {
             for (Map.Entry<Clock, Collection<Constraint>> bounds : minMaxBound.entrySet()) {
                 if (newBoundsOnMissing.containsAll(bounds.getValue())) {
@@ -138,7 +139,9 @@ public class PivotResult {
                 maximizingPair.put(tcc, tcc.getOtherValue(otherDimension, scc.getnValue()));
             }
         }
-        for (TwoClockConstraint tcc : remainingFreeConstraints) {
+        for (TwoClockConstraint tcc : remainingFreeConstraints.stream()
+                .filter(c -> c.hasClock(dimension))
+                .collect(Collectors.toList())) {
             Clock otherDimension = tcc.getOtherClock(dimension);
             //Todo might need recursion here
             SingleClockConstraint scc = constraintZone.getMaxConstraint(otherDimension);

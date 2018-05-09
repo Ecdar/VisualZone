@@ -7,10 +7,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -54,9 +51,10 @@ public class WorldPolygon extends MeshView implements Object3D {
             return;
         }
 
-        double maxValue = Math.max(vertices.stream()
+        Optional<Double> max = vertices.stream()
                 .flatMap(v -> v.asStream()).filter(Double::isFinite)
-                .max(Double::compareTo).get() * 2, 50);
+                .max(Double::compareTo);
+        double maxValue = Math.max(max.get() * 2, 50);
         //Todo show infinite zones with more than double size face
 
         Vector3 center = new Vector3();

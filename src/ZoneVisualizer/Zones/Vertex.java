@@ -25,8 +25,7 @@ public class Vertex {
     }
 
     public PivotResult pivot(Clock pivotDimension) {
-        Constraint removingConstraint = LINQ.first(constraints.get(pivotDimension));
-        if (!removingConstraint.isLowerBoundOnDimension(pivotDimension)) {
+        if (constraints.get(pivotDimension).stream().anyMatch(c -> !c.isLowerBoundOnDimension(pivotDimension))) {
             //Dimension wont be maximized by removing this constraint
             return null;
         }
