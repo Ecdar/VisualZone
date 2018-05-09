@@ -1,12 +1,31 @@
 package ZoneVisualizer.Utility;
 
+import ZoneVisualizer.Constraints.Constraint;
+import ZoneVisualizer.Constraints.SingleClockConstraint;
+import ZoneVisualizer.Constraints.TwoClockConstraint;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class LINQ {
 
-    public static <T1, T2> Collection<T2> ofType(Collection<T1> collection) {
+    public static Collection<SingleClockConstraint> ofTypeSCC(Collection<Constraint> collection) {
+        return collection.stream()
+                .filter(c -> c instanceof SingleClockConstraint)
+                .map(c -> (SingleClockConstraint)c)
+                .collect(Collectors.toList());
+    }
+
+    public static Collection<TwoClockConstraint> ofTypeTCC(Collection<Constraint> collection) {
+        return collection.stream()
+                .filter(c -> c instanceof TwoClockConstraint)
+                .map(c -> (TwoClockConstraint)c)
+                .collect(Collectors.toList());
+    }
+
+    public static <T1, T2> Collection<T2> cast(Collection<T1> collection) {
         ArrayList<T2> result = new ArrayList<>();
         for (T1 obj : collection) {
             try {

@@ -4,6 +4,7 @@ import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.Constraints.SingleClockConstraint;
 import ZoneVisualizer.Constraints.TwoClockConstraint;
+import ZoneVisualizer.Utility.IAction2;
 import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
@@ -59,7 +60,7 @@ public class PivotResult {
                 ArrayList<TwoClockConstraint> remainingUnknowns = new ArrayList<>(this.freeTwoClockConstraints);
                 remainingUnknowns.remove(potential);
                 potentialAdditions.forEach((key, value) -> remainingUnknowns.removeAll(value));
-                bindRemainingTCC(potentialAdditions, knownDimensions, remainingUnknowns);
+                bindRemainingTCC(knownDimensions, remainingUnknowns, potentialAdditions);
             }
             double valuation = getValuation(potentialAdditions, missingDimension);
             if (valuation > oldValue) {
@@ -70,7 +71,7 @@ public class PivotResult {
         ArrayList<Clock> knownDimensions = new ArrayList<>();
         knownDimensions.add(missingDimension);
         ArrayList<TwoClockConstraint> remainingUnknowns = new ArrayList<>(freeTwoClockConstraints);
-        bindRemainingTCC(potentialAdditions, knownDimensions, remainingUnknowns);
+        bindRemainingTCC(knownDimensions, remainingUnknowns, potentialAdditions);
 
         //Find potential vertex for max constraint
         Map<Clock, Collection<Constraint>> potentialMaxAdditions = new HashMap<>(potentialAdditions);
@@ -94,21 +95,36 @@ public class PivotResult {
                 .flatMap(map -> map.get(missingDimension).stream())
                 .collect(Collectors.toList());
         vertex.addConstraints(missingDimension, newBoundsOnMissing);
-        //Todo This doesn't work. Resolve new additions and remaining free TCC's in a different way
+        List<Clock> foundDimensions = new ArrayList<>();
+        foundDimensions.add(missingDimension);
+        //Handle all the new additions
         for (Map<Clock, Collection<Constraint>> minMaxBound : minMaxBounds) {
             for (Map.Entry<Clock, Collection<Constraint>> bounds : minMaxBound.entrySet()) {
-                if (newBoundsOnMissing.containsAll(bounds.getValue())) {
-                    continue;
-                }
-                if (!vertex.knowsDimension(bounds.getKey())) {
-                    vertex.addConstraints(bounds.getKey(), bounds.getValue());
+                Collection<Constraint> newConstraints = bounds.getValue().stream()
+                        .filter(c -> !newBoundsOnMissing.contains(c))
+                        .filter(c -> !freeTwoClockConstraints.contains(c))
+                        .collect(Collectors.toList());
+                if (!newConstraints.isEmpty()) {
+                    foundDimensions.add(bounds.getKey());
+                    vertex.addConstraints(bounds.getKey(), newConstraints);
                 }
             }
         }
+        //Handle the free TCC's that doesn't bound missing dimension
+        Collection<TwoClockConstraint> remainingFreeTCCs = new ArrayList<>(freeTwoClockConstraints);
+        remainingFreeTCCs.removeAll(newBoundsOnMissing);
+        bindRemainingTCC(foundDimensions, remainingFreeTCCs,
+                (clock, constraint) -> vertex.addConstraint(clock, constraint));
     }
 
-    private void bindRemainingTCC(Map<Clock, Collection<Constraint>> potentialAdditions,
-                                  List<Clock> knownDimensions, Collection<TwoClockConstraint> remainingUnknowns) {
+    private void bindRemainingTCC(List<Clock> knownDimensions, Collection<TwoClockConstraint> remainingUnknowns,
+                                  Map<Clock, Collection<Constraint>> potentialAdditions) {
+        bindRemainingTCC(knownDimensions, remainingUnknowns,
+                (clock, constraint) -> LINQ.addToDeepMap(potentialAdditions, clock, constraint));
+    }
+
+    private void bindRemainingTCC(List<Clock> knownDimensions, Collection<TwoClockConstraint> remainingUnknowns,
+                                  IAction2<Clock, Constraint> binderMethod) {
         for (int i = 0; i < knownDimensions.size(); i++) {
             Clock knownDimension = knownDimensions.get(i);
             List<TwoClockConstraint> knowables = remainingUnknowns.stream()
@@ -117,7 +133,7 @@ public class PivotResult {
             remainingUnknowns.removeAll(knowables);
             for (TwoClockConstraint knowable : knowables) {
                 Clock unknownClock = knowable.getOtherClock(knownDimension);
-                LINQ.addToDeepMap(potentialAdditions, unknownClock, knowable);
+                binderMethod.invoke(unknownClock, knowable);
                 knownDimensions.add(unknownClock);
             }
         }
@@ -128,7 +144,7 @@ public class PivotResult {
                                    Collection<TwoClockConstraint> remainingFreeConstraints) {
         Collection<TwoClockConstraint> twoClockConstraints = getEligibleTCCs(constraintZone, dimension);
         Map<Constraint, Double> maximizingPair = new HashMap<>();
-        Collection<SingleClockConstraint> vertexSCC = LINQ.ofType(vertex.getAllConstraints());
+        Collection<SingleClockConstraint> vertexSCC = LINQ.ofTypeSCC(vertex.getAllConstraints());
         for (TwoClockConstraint tcc : twoClockConstraints) {
             Clock otherDimension = tcc.getOtherClock(dimension);
             Optional<SingleClockConstraint> first = vertexSCC.stream()
@@ -173,9 +189,10 @@ public class PivotResult {
 
     private Collection<TwoClockConstraint> getEligibleTCCs(ConstraintZone constraintZone, Clock dimension) {
         Collection<TwoClockConstraint> twoClockConstraints = constraintZone.getTCConstraintByPrimary(dimension);
-        twoClockConstraints.removeIf(tcc -> initialTwoClockConstraints.stream()
-                .anyMatch(init -> init.hasClock(tcc.getClock1()) && init.hasClock(tcc.getClock2())));
         twoClockConstraints.removeAll(fromPivotConstraints);
+        twoClockConstraints.removeIf(tcc ->
+                freeTwoClockConstraints.stream().anyMatch(free -> free.hasClock(tcc.getClock1())) &&
+                freeTwoClockConstraints.stream().anyMatch(free -> free.hasClock(tcc.getClock2())));
         return twoClockConstraints;
     }
 

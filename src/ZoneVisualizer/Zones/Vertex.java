@@ -71,7 +71,7 @@ public class Vertex {
         Collection<Set<Constraint>> subsets = LINQ.subsets(constraints.get(pivotDimension), 2);
         for (Set<Constraint> subset : subsets) {
             Vertex newVertex = new Vertex(constraints.keySet());
-            Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>(LINQ.ofType(subset));
+            Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>(LINQ.ofTypeTCC(subset));
             Collection<Clock> handledDimensions = twoClockConstraints.stream()
                     .map(tcc -> tcc.getOtherClock(pivotDimension))
                     .collect(Collectors.toList());

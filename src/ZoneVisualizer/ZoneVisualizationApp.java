@@ -123,7 +123,7 @@ public class ZoneVisualizationApp extends Application {
     }
 
     public static void disableRemainingClockDimensions(boolean disable) {
-        for (CheckBox cb : LINQ.<Node, CheckBox>ofType(dimensionUI)) {
+        for (CheckBox cb : LINQ.<Node, CheckBox>cast(dimensionUI)) {
             if (!cb.isSelected()) {
                 cb.setDisable(disable);
             }
