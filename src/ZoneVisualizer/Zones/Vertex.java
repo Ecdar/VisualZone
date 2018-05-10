@@ -54,11 +54,12 @@ public class Vertex {
             twoClockConstraints.add((TwoClockConstraint)c);
             return;
         }
+        Optional<Constraint> scc = oldConstraints.stream().filter(c -> c instanceof SingleClockConstraint).findFirst();
+        if (scc.isPresent()) {
+            newVertex.addConstraint(oldDimension, scc.get());
+            return;
+        }
         for (Constraint c : oldConstraints) {
-            if (c instanceof SingleClockConstraint) {
-                newVertex.addConstraint(oldDimension, c);
-                continue;
-            }
             TwoClockConstraint tcc = (TwoClockConstraint)c;
             if (!tcc.hasClock(pivotDimension)) {
                 newVertex.addConstraint(oldDimension, tcc);
@@ -68,21 +69,53 @@ public class Vertex {
 
     public Collection<PivotResult> degeneratePivot(Clock pivotDimension) {
         Collection<PivotResult> results = new ArrayList<>();
-        Collection<Set<Constraint>> subsets = LINQ.subsets(constraints.get(pivotDimension), 2);
-        for (Set<Constraint> subset : subsets) {
-            Vertex newVertex = new Vertex(constraints.keySet());
-            Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>(LINQ.ofTypeTCC(subset));
-            Collection<Clock> handledDimensions = twoClockConstraints.stream()
-                    .map(tcc -> tcc.getOtherClock(pivotDimension))
-                    .collect(Collectors.toList());
-            Collection<Clock> missingDimensions = constraints.keySet();
-            missingDimensions.remove(pivotDimension);
-            missingDimensions.removeAll(handledDimensions);
-            for (Clock missingDimension : missingDimensions) {
-                Set<Constraint> oldConstraints = constraints.get(missingDimension);
-                tryAddConstraintsToVertex(pivotDimension, newVertex, twoClockConstraints, missingDimension, oldConstraints);
+        Set<Constraint> degenerateConstraints = constraints.get(pivotDimension);
+        Optional<Constraint> scc = degenerateConstraints.stream().filter(c -> c instanceof SingleClockConstraint).findFirst();
+        Collection<Set<Constraint>> subsets = LINQ.subsets(degenerateConstraints, 2);
+        if (scc.isPresent()) {
+            for (Set<Constraint> subset : subsets) {
+                if (!subset.contains(scc.get())) {
+                    continue;
+                }
+                Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>(LINQ.cast(subset));
+                Collection<Clock> handledDimensions = twoClockConstraints.stream()
+                        .map(tcc -> tcc.getOtherClock(pivotDimension))
+                        .collect(Collectors.toList());
+                Collection<Clock> missingDimensions = constraints.keySet();
+                missingDimensions.remove(pivotDimension);
+                missingDimensions.removeAll(handledDimensions);
+                for (Clock missingDimension : missingDimensions) {
+                    Vertex newVertex = new Vertex(constraints.keySet());
+                    Collection<TwoClockConstraint> newTwoClockConstraints = new ArrayList<>(twoClockConstraints);
+                    Collection<Clock> unhandledDimensions = new ArrayList<>(missingDimensions);
+                    unhandledDimensions.remove(missingDimension);
+                    for (Clock unhandledDimension : unhandledDimensions) {
+                        Set<Constraint> oldConstraints = constraints.get(unhandledDimension);
+                        tryAddConstraintsToVertex(missingDimension, newVertex, newTwoClockConstraints, unhandledDimension, oldConstraints);
+                    }
+                    results.add(new PivotResult(this, newVertex, missingDimension, newTwoClockConstraints));
+                }
             }
-            results.add(new PivotResult(this, newVertex, pivotDimension, twoClockConstraints));
+        }
+        else {
+            for (Set<Constraint> subset : subsets) {
+                Vertex newVertex = new Vertex(constraints.keySet());
+                Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>(LINQ.cast(subset));
+                Collection<TwoClockConstraint> adjacentTwoClockConstraints = twoClockConstraints.stream()
+                        .filter(tcc -> tcc.getClock1() == pivotDimension)
+                        .collect(Collectors.toList());
+                Collection<Clock> handledDimensions = adjacentTwoClockConstraints.stream()
+                        .map(tcc -> tcc.getOtherClock(pivotDimension))
+                        .collect(Collectors.toList());
+                Collection<Clock> missingDimensions = constraints.keySet();
+                missingDimensions.remove(pivotDimension);
+                missingDimensions.removeAll(handledDimensions);
+                for (Clock missingDimension : missingDimensions) {
+                    Set<Constraint> oldConstraints = constraints.get(missingDimension);
+                    tryAddConstraintsToVertex(pivotDimension, newVertex, adjacentTwoClockConstraints, missingDimension, oldConstraints);
+                }
+                results.add(new PivotResult(this, newVertex, pivotDimension, adjacentTwoClockConstraints));
+            }
         }
         return results;
     }
@@ -169,15 +202,7 @@ public class Vertex {
         if (constraints.size() != other.constraints.size()) {
             return false;
         }
-        for (Clock key : constraints.keySet()) {
-            if (!other.constraints.containsKey(key)) {
-                return false;
-            }
-            if (!constraints.get(key).equals(other.constraints.get(key))) {
-                return false;
-            }
-        }
-        return true;
+        return new HashSet<>(getAllConstraints()).equals(new HashSet<>(other.getAllConstraints()));
     }
 
     @Override
