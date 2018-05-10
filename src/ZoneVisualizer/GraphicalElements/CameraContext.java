@@ -123,6 +123,6 @@ public class CameraContext {
     }
 
     public static void setIs2D(boolean is2D) {
-//        CameraContext.is2D = is2D;
+        CameraContext.is2D = is2D;
     }
 }
