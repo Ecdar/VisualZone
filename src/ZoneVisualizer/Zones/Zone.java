@@ -6,6 +6,8 @@ import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import ZoneVisualizer.Utility.LINQ;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Zone {
@@ -124,6 +126,16 @@ public class Zone {
             List<Vector3> projectedVertices = verticeIndices.stream()
                     .map(i -> vertices.get(i))
                     .map(v -> new Vector3(v.getCoordinate(dimension1), v.getCoordinate(dimension2), v.getCoordinate(dimension3)))
+                    .collect(Collectors.toList());
+            Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
+
+            return new WorldPolygon(projectedVertices, vNormal.multiply(-1));
+        }
+
+        public WorldPolygon project(Clock dimension1, Clock dimension2, Clock dimension3, BiFunction<Vertex, Clock, Double> mapper) {
+            List<Vector3> projectedVertices = verticeIndices.stream()
+                    .map(i -> vertices.get(i))
+                    .map(v -> new Vector3(mapper.apply(v, dimension1), mapper.apply(v, dimension2), mapper.apply(v, dimension3)))
                     .collect(Collectors.toList());
             Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
 

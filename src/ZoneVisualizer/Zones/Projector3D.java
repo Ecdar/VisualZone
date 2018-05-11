@@ -6,11 +6,9 @@ import ZoneVisualizer.Constraints.TwoClockConstraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Projector3D extends Projector {
     private final Clock dimension1;
@@ -29,11 +27,18 @@ public class Projector3D extends Projector {
         if (zone.getVertices().isEmpty()) {
             return projectedPolygons;
         }
-        List<Vector3> projectedVertices = new ArrayList<>();
 
+        Optional<Double> max = zone.getVertices().stream()
+                .flatMap(v -> Stream.of(v.getCoordinate(dimension1), v.getCoordinate(dimension2), v.getCoordinate(dimension3)))
+                .filter(Double::isFinite)
+                .max(Double::compareTo);
+        double maxValue = Math.max(max.get() * 2, 50);
+        List<Vector3> projectedVertices = new ArrayList<>();
         for (Vertex vertex : zone.getVertices()) {
-            Vector3 projectedVertex = new Vector3(vertex.getCoordinate(dimension1),
-                    vertex.getCoordinate(dimension2), vertex.getCoordinate(dimension3));
+            Vector3 projectedVertex = new Vector3(
+                    vertex.getVisualCoordinate(dimension1, maxValue),
+                    vertex.getVisualCoordinate(dimension2, maxValue),
+                    vertex.getVisualCoordinate(dimension3, maxValue));
             if (!projectedVertices.contains(projectedVertex)) {
                 projectedVertices.add(projectedVertex);
             }
@@ -102,7 +107,8 @@ public class Projector3D extends Projector {
             if (face.getKey() instanceof TwoClockConstraint) {
                 TwoClockConstraint tcConstraint = (TwoClockConstraint)face.getKey();
                 if (isTCConstraintOfClocks(tcConstraint, dimension1, dimension2, dimension3)) {
-                    projectedPolygons.add(face.getValue().project(dimension1, dimension2, dimension3));
+                    projectedPolygons.add(face.getValue().project(dimension1, dimension2, dimension3,
+                            (v, c) -> v.getVisualCoordinate(c, maxValue)));
                 }
             }
         }

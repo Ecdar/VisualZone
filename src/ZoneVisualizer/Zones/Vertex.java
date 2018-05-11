@@ -42,31 +42,6 @@ public class Vertex {
         return new PivotResult(this, newVertex, pivotDimension, twoClockConstraints);
     }
 
-    private void tryAddConstraintsToVertex(Clock pivotDimension, Vertex newVertex,
-                                           Collection<TwoClockConstraint> twoClockConstraints, Clock oldDimension,
-                                           Set<Constraint> oldConstraints) {
-        if (oldConstraints.size() == 1) {
-            Constraint c = LINQ.first(oldConstraints);
-            if (c instanceof SingleClockConstraint) {
-                newVertex.addConstraint(oldDimension, c);
-                return;
-            }
-            twoClockConstraints.add((TwoClockConstraint)c);
-            return;
-        }
-        Optional<Constraint> scc = oldConstraints.stream().filter(c -> c instanceof SingleClockConstraint).findFirst();
-        if (scc.isPresent()) {
-            newVertex.addConstraint(oldDimension, scc.get());
-            return;
-        }
-        for (Constraint c : oldConstraints) {
-            TwoClockConstraint tcc = (TwoClockConstraint)c;
-            if (!tcc.hasClock(pivotDimension)) {
-                newVertex.addConstraint(oldDimension, tcc);
-            }
-        }
-    }
-
     public Collection<PivotResult> degeneratePivot(Clock pivotDimension) {
         Collection<PivotResult> results = new ArrayList<>();
         Set<Constraint> degenerateConstraints = constraints.get(pivotDimension);
@@ -120,6 +95,31 @@ public class Vertex {
         return results;
     }
 
+    private void tryAddConstraintsToVertex(Clock pivotDimension, Vertex newVertex,
+                                           Collection<TwoClockConstraint> twoClockConstraints, Clock oldDimension,
+                                           Set<Constraint> oldConstraints) {
+        if (oldConstraints.size() == 1) {
+            Constraint c = LINQ.first(oldConstraints);
+            if (c instanceof SingleClockConstraint) {
+                newVertex.addConstraint(oldDimension, c);
+                return;
+            }
+            twoClockConstraints.add((TwoClockConstraint)c);
+            return;
+        }
+        Optional<Constraint> scc = oldConstraints.stream().filter(c -> c instanceof SingleClockConstraint).findFirst();
+        if (scc.isPresent()) {
+            newVertex.addConstraint(oldDimension, scc.get());
+            return;
+        }
+        for (Constraint c : oldConstraints) {
+            TwoClockConstraint tcc = (TwoClockConstraint)c;
+            if (!tcc.hasClock(pivotDimension)) {
+                newVertex.addConstraint(oldDimension, tcc);
+            }
+        }
+    }
+
     public Collection<Constraint> getConstraints(Clock key) {
         return constraints.get(key);
     }
@@ -128,10 +128,6 @@ public class Vertex {
         return constraints.values().stream()
                 .flatMap(col -> col.stream())
                 .collect(Collectors.toSet());
-    }
-
-    public boolean knowsDimension(Clock dimension) {
-        return !constraints.get(dimension).isEmpty();
     }
 
     public void addConstraint(Clock key, Constraint value) {
@@ -160,7 +156,7 @@ public class Vertex {
     }
 
     private double calculateCoordinate(Clock dimension) {
-        Constraint constraint = LINQ.first(constraints.get(dimension));
+        Constraint constraint = getConstraintOfDimension(dimension);
         return calculateCoordinate(dimension, constraint);
     }
 
@@ -173,6 +169,41 @@ public class Vertex {
         Clock otherClock = tcc.getOtherClock(dimension);
         double otherValue = getCoordinate(otherClock);
         return tcc.getOtherValue(otherClock, otherValue);
+    }
+
+    public Double getVisualCoordinate(Clock key, double fakeInfinity) {
+        if (coordinates.containsKey(key) && Double.isFinite(coordinates.get(key))) {
+            return coordinates.get(key);
+        }
+        return calculateVisualCoordinate(key, fakeInfinity);
+    }
+
+    private Double calculateVisualCoordinate(Clock key, double fakeInfinity) {
+        Constraint constraint = getConstraintOfDimension(key);
+        if (constraint instanceof SingleClockConstraint) {
+            if (!Double.isFinite(constraint.getnValue())) {
+                return fakeInfinity;
+            }
+            return constraint.getnValue();
+        }
+        TwoClockConstraint tcc = (TwoClockConstraint)constraint;
+        //Recursion beware
+        Clock otherClock = tcc.getOtherClock(key);
+        double otherValue = calculateVisualCoordinate(otherClock, fakeInfinity);
+        return tcc.getOtherValue(otherClock, otherValue);
+    }
+
+    private Constraint getConstraintOfDimension(Clock dimension) {
+        Optional<Constraint> scc = constraints.get(dimension).stream()
+                .filter(c -> c instanceof SingleClockConstraint).findFirst();
+        Constraint constraint;
+        if (scc.isPresent()) {
+            constraint = scc.get();
+        }
+        else {
+            constraint = LINQ.first(constraints.get(dimension));
+        }
+        return constraint;
     }
 
     public Collection<Clock> getKnownDimensions() {
