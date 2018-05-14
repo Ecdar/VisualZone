@@ -68,6 +68,10 @@ public class Zone {
                 //Simple case; a greater than constraint exists for this dimension
                 origin.addConstraint(clock, c);
             }
+            else if (constraintZone.getTCConstraintBySecondary(clock).isEmpty()) {
+                //No bounds on this dimension. Add an implicit greater than 0 bound
+                origin.addConstraint(clock, new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
+            }
             else {
                 delayedDimensions.add(clock);
             }
@@ -77,24 +81,31 @@ public class Zone {
             if (!twoClockMaxConstraints.isEmpty()) {
                 //There exists one or more two clock constraints bounding the minimum value of this dimension
                 //Find the highest minimum bound. Can be several constraints if origin is degenerate
+                Map<TwoClockConstraint, Double> valueMap = new HashMap<>();
+                for (TwoClockConstraint tcc : twoClockMaxConstraints) {
+                    double otherDimValue = 0;
+                    if (!delayedDimensions.contains(tcc.getClock1())) {
+                        otherDimValue = origin.getCoordinate(tcc.getClock1());
+                    }
+                    double value = tcc.getOtherValue(tcc.getClock1(), otherDimValue);
+                    valueMap.put(tcc, value);
+                }
                 double originNValue = twoClockMaxConstraints.stream()
-                        .map(Constraint::getnValue)
+                        .map(valueMap::get)
                         .min(Double::compareTo).get();
                 Collection<Constraint> maximizedMinBounds = twoClockMaxConstraints.stream()
-                        .filter(tcc -> tcc.getnValue() == originNValue)
+                        .filter(tcc -> valueMap.get(tcc) == originNValue)
                         .collect(Collectors.toList());
                 TwoClockConstraint tcc = (TwoClockConstraint)LINQ.first(maximizedMinBounds);
-                double otherDimValue = 0;
-                if (!delayedDimensions.contains(tcc.getClock1())) {
-                    otherDimValue = origin.getCoordinate(tcc.getClock1());
-                }
-                if (tcc.getnValue() <= otherDimValue) {
+                if (valueMap.get(tcc) > 0) {
                     origin.addConstraints(clock, maximizedMinBounds);
-                    continue;
+                }
+                else {
+                    //No TCC is more restrictive than the 0 bound.
+                    origin.addConstraint(clock, new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
                 }
             }
-            //No bounds on this dimension. Add an implicit greater than 0 bound
-            origin.addConstraint(clock, new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
+
         }
         return origin;
     }
