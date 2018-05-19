@@ -31,21 +31,9 @@ public class Zone {
         for (int i = 0; i < vertices.size(); i++) {
             Vertex pivot = vertices.get(i);
 
-            for (Clock clock : clocks) {
-                PivotResult pivotResult = pivot.pivot(clock);
-                if (pivotResult != null) {
-                    pivotResult.findMissingConstraints(constraintZone);
-                    tryAddVertex(pivotResult.getVertex());
-                }
-            }
-            if (pivot.isDegenerate()) {
-                for (Clock degenerateDimension : pivot.getDegenerateDimensions()) {
-                    Collection<PivotResult> pivotResults = pivot.degeneratePivot(degenerateDimension);
-                    for (PivotResult pivotResult : pivotResults) {
-                        pivotResult.findMissingConstraints(constraintZone);
-                        tryAddVertex(pivotResult.getVertex());
-                    }
-                }
+            for (PivotResult pivotResult : pivot.useAsPivot()) {
+                pivotResult.findMissingConstraints(constraintZone, infinityValue);
+                tryAddVertex(pivotResult.getVertex());
             }
         }
     }

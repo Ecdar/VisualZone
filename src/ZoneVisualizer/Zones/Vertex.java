@@ -24,6 +24,22 @@ public class Vertex {
         this.degenerate = degenerate;
     }
 
+    public Collection<PivotResult> useAsPivot() {
+        Collection<PivotResult> results = new ArrayList<>();
+        for (Clock clock : constraints.keySet()) {
+            PivotResult result = pivot(clock);
+            if (result != null) {
+                results.add(result);
+            }
+        }
+        if (degenerate) {
+            for (Clock clock : getDegenerateDimensions()) {
+                results.addAll(degeneratePivot(clock));
+            }
+        }
+        return results;
+    }
+
     public PivotResult pivot(Clock pivotDimension) {
         if (constraints.get(pivotDimension).stream().anyMatch(c -> !c.isLowerBoundOnDimension(pivotDimension))) {
             //Dimension wont be maximized by removing this constraint

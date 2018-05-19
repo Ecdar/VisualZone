@@ -71,6 +71,6 @@ public class CheatPanel extends GridPane {
             }
         }
 
-        ZoneVisualization.initialize(clockDimensions, chosenConstraints);
+        ZoneVisualization.initialize(clockDimensions, chosenConstraints, 50);
     }
 }
