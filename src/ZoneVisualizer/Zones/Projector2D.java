@@ -27,12 +27,14 @@ public class Projector2D extends Projector {
         List<Vector3> projectedVertices = new ArrayList<>();
 
         for (Vertex vertex : zone.getVertices()) {
-            Vector3 projectedVertex = new Vector3(vertex.getCoordinate(dimension1), vertex.getCoordinate(dimension2), 0);
+            Vector3 projectedVertex = new Vector3(vertex.getVisualCoordinate(dimension1, maxValue),
+                    vertex.getVisualCoordinate(dimension2, maxValue), 0);
             if (!projectedVertices.contains(projectedVertex)) {
                 projectedVertices.add(projectedVertex);
             }
         }
         List<Vector3> hullVertices = getHullVerticesOfZPlane(projectedVertices);
+        //Todo show infinite zones with more than double size face
 
         return Arrays.asList(new WorldPolygon(hullVertices, Vector3.back()));
     }

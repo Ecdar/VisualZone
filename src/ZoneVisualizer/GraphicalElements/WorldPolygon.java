@@ -47,31 +47,25 @@ public class WorldPolygon extends MeshView implements Object3D {
     public WorldPolygon(List<Vector3> vertices, Vector3 normal) {
         transformUpdater = new TransformUpdater(this, transform);
         this.normal = normal;
-        if (vertices.size() == 0) {
+        if (vertices.isEmpty()) {
             return;
         }
 
-        Optional<Double> max = vertices.stream()
-                .flatMap(v -> v.asStream()).filter(Double::isFinite)
-                .max(Double::compareTo);
-        double maxValue = Math.max(max.get() * 2, 50);
-        //Todo show infinite zones with more than double size face
-
         Vector3 center = new Vector3();
-        center.x = (vertices.stream().map(v -> Double.isFinite(v.x) ? v.x : maxValue).min(Double::compareTo).get() +
-                    vertices.stream().map(v -> Double.isFinite(v.x) ? v.x : maxValue).max(Double::compareTo).get()) / 2;
-        center.y = (vertices.stream().map(v -> Double.isFinite(v.y) ? v.y : maxValue).min(Double::compareTo).get() +
-                    vertices.stream().map(v -> Double.isFinite(v.y) ? v.y : maxValue).max(Double::compareTo).get()) / 2;
-        center.z = (vertices.stream().map(v -> Double.isFinite(v.z) ? v.z : maxValue).min(Double::compareTo).get() +
-                    vertices.stream().map(v -> Double.isFinite(v.z) ? v.z : maxValue).max(Double::compareTo).get()) / 2;
+        center.x = (vertices.stream().map(v -> v.x).min(Double::compareTo).get() +
+                    vertices.stream().map(v -> v.x).max(Double::compareTo).get()) / 2;
+        center.y = (vertices.stream().map(v -> v.y).min(Double::compareTo).get() +
+                    vertices.stream().map(v -> v.y).max(Double::compareTo).get()) / 2;
+        center.z = (vertices.stream().map(v -> v.z).min(Double::compareTo).get() +
+                    vertices.stream().map(v -> v.z).max(Double::compareTo).get()) / 2;
         transform.setPosition(center);
 
         for (int i = 0; i < vertices.size(); i++) {
             Vector3 vertex = vertices.get(i);
             Vector3 replace = new Vector3();
-            replace.x = Double.isFinite(vertex.x) ? vertex.x - center.x : maxValue - center.x;
-            replace.y = Double.isFinite(vertex.y) ? vertex.y - center.y : maxValue - center.y;
-            replace.z = Double.isFinite(vertex.z) ? vertex.z - center.z : maxValue - center.z;
+            replace.x = vertex.x - center.x;
+            replace.y = vertex.y - center.y;
+            replace.z = vertex.z - center.z;
             vertices.remove(i);
             vertices.add(i, replace);
         }
