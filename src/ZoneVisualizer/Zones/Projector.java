@@ -12,6 +12,12 @@ import java.util.stream.Collectors;
 
 public abstract class Projector {
 
+    protected double maxValue;
+
+    public Projector(double maxValue) {
+        this.maxValue = maxValue;
+    }
+
     public abstract Collection<WorldPolygon> project(Zone zone);
 
     protected List<Vector3> getHullVerticesOfXPlane(List<Vector3> projectedVertices) {

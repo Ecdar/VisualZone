@@ -50,15 +50,15 @@ public class PivotResult {
                 .filter(c -> c.hasClock(missingDimension))
                 .collect(Collectors.toList())) {
             Clock otherClock = potentialAddition.getOtherClock(missingDimension);
-            VertexPotential potential = new VertexPotential(fromPivot, missingDimension, freeTwoClockConstraints);
+            VertexPotential potential = new VertexPotential(fromPivot, missingDimension, infinityValue, freeTwoClockConstraints);
             potential.addPotentialConstraint(missingDimension, potentialAddition);
-            addMaxOfDimension(constraintZone, otherClock, potential);
+            addMaxOfDimension(constraintZone, otherClock, potential, infinityValue);
             potential.bindRemainingUnknowns();
             if (potential.getPotentialKeyValue() > oldValue) {
                 potentials.add(potential);
             }
         }
-        VertexPotential basePotential = new VertexPotential(fromPivot, missingDimension, freeTwoClockConstraints);
+        VertexPotential basePotential = new VertexPotential(fromPivot, missingDimension, infinityValue, freeTwoClockConstraints);
         basePotential.bindRemainingUnknowns(Collections.singletonList(missingDimension));
 
         //Find potential vertex for max constraint
@@ -81,7 +81,7 @@ public class PivotResult {
         VertexPotential.mergeIntoVertex(vertex, missingDimension, minMaxBounds, freeTwoClockConstraints);
     }
 
-    private void addMaxOfDimension(ConstraintZone constraintZone, Clock dimension, VertexPotential potential) {
+    private void addMaxOfDimension(ConstraintZone constraintZone, Clock dimension, VertexPotential potential, double infinityValue) {
         Collection<TwoClockConstraint> twoClockConstraints = getEligibleTCCs(constraintZone, dimension);
         Map<Constraint, Double> maximizingPair = new HashMap<>();
         Collection<SingleClockConstraint> vertexSCC = LINQ.ofTypeSCC(vertex.getAllConstraints());
@@ -91,8 +91,11 @@ public class PivotResult {
                     .filter(c -> c.getClock().equals(otherDimension))
                     .findFirst();
             if (first.isPresent()) {
-                SingleClockConstraint scc = first.get();
-                maximizingPair.put(tcc, tcc.getOtherValue(otherDimension, scc.getnValue()));
+                double sccValue = first.get().getnValue();
+                if (!Double.isFinite(sccValue)) {
+                    sccValue = infinityValue;
+                }
+                maximizingPair.put(tcc, tcc.getOtherValue(otherDimension, sccValue));
             }
         }
         for (TwoClockConstraint tcc : potential.getRemainingUnknowns().stream()
@@ -101,7 +104,11 @@ public class PivotResult {
             Clock otherDimension = tcc.getOtherClock(dimension);
             //Todo might need recursion here
             SingleClockConstraint scc = constraintZone.getMaxConstraint(otherDimension);
-            double valuation = tcc.getOtherValue(otherDimension, scc.getnValue());
+            double sccValue = scc.getnValue();
+            if (!Double.isFinite(sccValue)) {
+                sccValue = infinityValue;
+            }
+            double valuation = tcc.getOtherValue(otherDimension, sccValue);
             maximizingPair.put(scc, valuation);
             maximizingPair.put(tcc, valuation);
         }
@@ -134,24 +141,6 @@ public class PivotResult {
                 freeTwoClockConstraints.stream().anyMatch(free -> free.hasClock(tcc.getClock1())) &&
                 freeTwoClockConstraints.stream().anyMatch(free -> free.hasClock(tcc.getClock2())));
         return twoClockConstraints;
-    }
-
-    private double getValuation(Map<Clock, Collection<Constraint>> valueMap, Clock dimension) {
-        Constraint c;
-        if (valueMap.containsKey(dimension)) {
-            c = LINQ.first(valueMap.get(dimension));
-        }
-        else {
-            c = LINQ.first(vertex.getConstraints(dimension));
-        }
-        if (c instanceof SingleClockConstraint) {
-            return c.getnValue();
-        }
-        TwoClockConstraint tcc = (TwoClockConstraint)c;
-        //Recursion beware
-        Clock otherClock = tcc.getOtherClock(dimension);
-        double otherValue = getValuation(valueMap, otherClock);
-        return tcc.getOtherValue(otherClock, otherValue);
     }
 
     public Vertex getVertex() {

@@ -17,6 +17,7 @@ public class VertexPotential {
     private final Map<Clock, Collection<Constraint>> potentialAdditions = new HashMap<>();
     private final Collection<TwoClockConstraint> remainingUnknowns = new ArrayList<>();
     private final Clock keyDimension;
+    private final double infinityValue;
 
     private boolean valuated = false;
     private double potentialKeyValue;
@@ -71,13 +72,14 @@ public class VertexPotential {
         }
     }
 
-    public VertexPotential(Vertex baseVertex, Clock keyDimension, Collection<TwoClockConstraint> remainingUnknowns) {
+    public VertexPotential(Vertex baseVertex, Clock keyDimension, double infinityValue, Collection<TwoClockConstraint> remainingUnknowns) {
         this.baseVertex = baseVertex;
         this.remainingUnknowns.addAll(remainingUnknowns);
         this.keyDimension = keyDimension;
+        this.infinityValue = infinityValue;
     }
 
-    private VertexPotential(Vertex baseVertex, Clock keyDimension,
+    private VertexPotential(Vertex baseVertex, Clock keyDimension, double infinityValue,
                             Map<Clock, Collection<Constraint>> potentialConstraints,
                             Collection<TwoClockConstraint> remainingUnknowns,
                             boolean valuated, double potentialKeyValue) {
@@ -85,6 +87,7 @@ public class VertexPotential {
         this.potentialConstraints.putAll(potentialConstraints);
         this.remainingUnknowns.addAll(remainingUnknowns);
         this.keyDimension = keyDimension;
+        this.infinityValue = infinityValue;
         this.valuated = valuated;
         this.potentialKeyValue = potentialKeyValue;
     }
@@ -125,7 +128,11 @@ public class VertexPotential {
             c = LINQ.first(baseVertex.getConstraints(dimension));
         }
         if (c instanceof SingleClockConstraint) {
-            return c.getnValue();
+            double value = c.getnValue();
+            if (!Double.isFinite(value)) {
+                value = infinityValue;
+            }
+            return value;
         }
         TwoClockConstraint tcc = (TwoClockConstraint)c;
         Clock otherClock = tcc.getOtherClock(dimension);
@@ -135,6 +142,6 @@ public class VertexPotential {
     }
 
     public VertexPotential clone() {
-        return new VertexPotential(baseVertex, keyDimension, potentialConstraints, remainingUnknowns, valuated, potentialKeyValue);
+        return new VertexPotential(baseVertex, keyDimension, infinityValue, potentialConstraints, remainingUnknowns, valuated, potentialKeyValue);
     }
 }

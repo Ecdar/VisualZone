@@ -17,7 +17,8 @@ public class Projector3D extends Projector {
     private final Clock dimension2;
     private final Clock dimension3;
 
-    public Projector3D(Clock dimension1, Clock dimension2, Clock dimension3) {
+    public Projector3D(Clock dimension1, Clock dimension2, Clock dimension3, double maxValue) {
+        super(maxValue);
         this.dimension1 = dimension1;
         this.dimension2 = dimension2;
         this.dimension3 = dimension3;

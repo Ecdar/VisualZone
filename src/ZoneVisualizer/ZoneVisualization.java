@@ -68,7 +68,7 @@ public class ZoneVisualization {
     }
 
     private static void twoClocksSetup() {
-        Projector projector = new Projector2D(currentClockDimensions.get(0), currentClockDimensions.get(1));
+        Projector projector = new Projector2D(currentClockDimensions.get(0), currentClockDimensions.get(1), maximumValue);
         Vector3 center = find3DContentAndCenter(projector);
         ZoneVisualizationApp.setCamera2D(center,
                 currentClockDimensions.get(0), currentClockDimensions.get(1));
@@ -76,7 +76,7 @@ public class ZoneVisualization {
 
     private static void threeClocksSetup() {
         ZoneVisualizationApp.disableRemainingClockDimensions(true);
-        Projector projector = new Projector3D(currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
+        Projector projector = new Projector3D(currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2), maximumValue);
         Vector3 center = find3DContentAndCenter(projector);
         ZoneVisualizationApp.setCamera3D(center,
                 currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
