@@ -29,11 +29,6 @@ public class Projector3D extends Projector {
             return projectedPolygons;
         }
 
-        Optional<Double> max = zone.getVertices().stream()
-                .flatMap(v -> Stream.of(v.getCoordinate(dimension1), v.getCoordinate(dimension2), v.getCoordinate(dimension3)))
-                .filter(Double::isFinite)
-                .max(Double::compareTo);
-        double maxValue = Math.max(max.get() * 2, 50);
         List<Vector3> projectedVertices = new ArrayList<>();
         for (Vertex vertex : zone.getVertices()) {
             Vector3 projectedVertex = new Vector3(
@@ -113,6 +108,7 @@ public class Projector3D extends Projector {
                 }
             }
         }
+        //Todo show infinite zones with more than double size face
 
         return projectedPolygons;
     }
