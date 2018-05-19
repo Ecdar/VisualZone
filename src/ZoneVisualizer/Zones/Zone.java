@@ -12,8 +12,12 @@ public class Zone {
 
     protected final List<Vertex> vertices;
     protected Map<Constraint, Face> faces;
+    protected final double maxValue;
+    protected final double infinityValue;
 
-    public Zone(Collection<Constraint> constraints, Collection<Clock> clocks) {
+    public Zone(Collection<Constraint> constraints, Collection<Clock> clocks, double maxValue) {
+        this.maxValue = maxValue;
+        infinityValue = 2 * maxValue;
         ConstraintZone constraintZone = new ConstraintZone(constraints);
         vertices = new ArrayList<>();
         faces = new HashMap<>();

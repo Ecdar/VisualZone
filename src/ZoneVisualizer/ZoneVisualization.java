@@ -18,18 +18,20 @@ public class ZoneVisualization {
 
     private static ArrayList<Clock> clocks = new ArrayList<>();
     private static ArrayList<Constraint> constraints = new ArrayList<>();
+    private static double maximumValue;
 
     private static ArrayList<Clock> currentClockDimensions = new ArrayList<>();
     private static Zone zone;
 
-    public static void initialize(List<Clock> clockList, List<Constraint> constraintList) {
+    public static void initialize(List<Clock> clockList, List<Constraint> constraintList, double maxValue) {
         clocks.clear();
         constraints.clear();
         currentClockDimensions.clear();
         clocks.addAll(clockList);
         constraints.addAll(constraintList);
+        maximumValue = maxValue;
 
-        zone = new Zone(constraintList, clockList);
+        zone = new Zone(constraintList, clockList, maxValue);
 
         ZoneVisualizationApp.setClockDimensions(clocks);
         if (clocks.size() > 2) {
