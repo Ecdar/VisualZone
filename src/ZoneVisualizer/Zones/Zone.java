@@ -14,8 +14,12 @@ public class Zone {
 
     protected final List<Vertex> vertices;
     protected Map<Constraint, Face> faces;
+    protected final double maxValue;
+    protected final double infinityValue;
 
-    public Zone(Collection<Constraint> constraints, Collection<Clock> clocks) {
+    public Zone(Collection<Constraint> constraints, Collection<Clock> clocks, double maxValue) {
+        this.maxValue = maxValue;
+        infinityValue = 2 * maxValue;
         ConstraintZone constraintZone = new ConstraintZone(constraints);
         vertices = new ArrayList<>();
         faces = new HashMap<>();
@@ -29,21 +33,9 @@ public class Zone {
         for (int i = 0; i < vertices.size(); i++) {
             Vertex pivot = vertices.get(i);
 
-            for (Clock clock : clocks) {
-                PivotResult pivotResult = pivot.pivot(clock);
-                if (pivotResult != null) {
-                    pivotResult.findMissingConstraints(constraintZone);
-                    tryAddVertex(pivotResult.getVertex());
-                }
-            }
-            if (pivot.isDegenerate()) {
-                for (Clock degenerateDimension : pivot.getDegenerateDimensions()) {
-                    Collection<PivotResult> pivotResults = pivot.degeneratePivot(degenerateDimension);
-                    for (PivotResult pivotResult : pivotResults) {
-                        pivotResult.findMissingConstraints(constraintZone);
-                        tryAddVertex(pivotResult.getVertex());
-                    }
-                }
+            for (PivotResult pivotResult : pivot.useAsPivot()) {
+                pivotResult.findMissingConstraints(constraintZone, infinityValue);
+                tryAddVertex(pivotResult.getVertex());
             }
         }
     }
