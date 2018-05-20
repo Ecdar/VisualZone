@@ -17,14 +17,12 @@ public class PivotResult {
     private Clock missingDimension;
     private final Collection<TwoClockConstraint> freeTwoClockConstraints;
     private final Collection<Constraint> fromPivotConstraints;
-    private final Collection<TwoClockConstraint> initialTwoClockConstraints;
 
     public PivotResult(Vertex fromPivot, Vertex vertex, Clock missingDimension, Collection<TwoClockConstraint> twoClockConstraints) {
         this.fromPivot = fromPivot;
         this.fromPivotConstraints = fromPivot.getAllConstraints();
         this.vertex = vertex;
         this.missingDimension = missingDimension;
-        this.initialTwoClockConstraints = new ArrayList<>(twoClockConstraints);
         //Find TwoClockConstraints that can only bound one dimension
         List<Clock> knownDimensions = new ArrayList<>(vertex.getKnownDimensions());
         for (int i = 0; i < knownDimensions.size(); i++) {
