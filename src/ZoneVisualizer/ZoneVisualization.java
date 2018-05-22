@@ -61,7 +61,7 @@ public class ZoneVisualization {
         int prevSize = currentClockDimensions.size();
         currentClockDimensions.remove(clock);
         if (prevSize >= 3 && currentClockDimensions.size() < 3) {
-            ZoneVisualizationApp.disableRemainingClockDimensions(false);
+            ZoneVisualizationApp.setDisableRemainingClockDimensions(false);
         }
         if (currentClockDimensions.size() == 2) {
             twoClocksSetup();
@@ -76,7 +76,7 @@ public class ZoneVisualization {
     }
 
     private static void threeClocksSetup() {
-        ZoneVisualizationApp.disableRemainingClockDimensions(true);
+        ZoneVisualizationApp.setDisableRemainingClockDimensions(true);
         Projector projector = new Projector3D(currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2), maximumValue);
         Vector3 center = find3DContentAndCenter(projector);
         ZoneVisualizationApp.setCamera3D(center,
