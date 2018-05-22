@@ -4,6 +4,7 @@ import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
+import ZoneVisualizer.Views.ZoneVisualizationApp;
 import ZoneVisualizer.Zones.Projector;
 import ZoneVisualizer.Zones.Projector2D;
 import ZoneVisualizer.Zones.Projector3D;
@@ -84,7 +85,10 @@ public class ZoneVisualization {
 
     private static Vector3 find3DContentAndCenter(Projector projector) {
         Collection<WorldPolygon> projectedZoneFaces = projector.project(zone);
-        ZoneVisualizationApp.set3DContent(projectedZoneFaces);
+        Collection<WorldPolygon> sceneContent = new ArrayList<>();
+        projectedZoneFaces.forEach(face -> sceneContent.add(face.getBackFace()));
+        sceneContent.addAll(projectedZoneFaces);
+        ZoneVisualizationApp.set3DContent(sceneContent);
         Vector3 center = new Vector3();
         List<Vector3> facePositions = projectedZoneFaces.stream()
                 .map(f -> f.getTransform().getPositionReadonly()).collect(Collectors.toList());

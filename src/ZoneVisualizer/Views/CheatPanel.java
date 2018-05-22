@@ -1,4 +1,4 @@
-package ZoneVisualizer.Debugging;
+package ZoneVisualizer.Views;
 
 import ZoneVisualizer.*;
 import ZoneVisualizer.Constraints.*;

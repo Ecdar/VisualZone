@@ -16,37 +16,19 @@ public class WorldPolygon extends MeshView implements Object3D {
     private final WorldTransform transform = new WorldTransform();
     private final TransformUpdater transformUpdater;
     private final Vector3 normal;
+    private final List<Vector3> vertices;
+    private WorldPolygon backFace;
 
-    public WorldPolygon(float[] vertices, float texCoords[], int[] faces) {
-        super();
-        if (vertices.length % 3 != 0) {
-            throw new RuntimeException("Received " + vertices.length + " vertices. Must be divisible by 3");
-        }
-        else if (texCoords.length % 2 != 0) {
-            throw new RuntimeException("Received " + texCoords.length + " tex coordinates. Must be divisible by 2");
-        }
-        else if (faces.length % 6 != 0) {
-            throw new RuntimeException("Received " + faces.length + " face indices. Must be divisible by 3");
-        }
-        transformUpdater = new TransformUpdater(this, transform);
-        if (faces.length > 0) {
-            Vector3 p1 = new Vector3(vertices[faces[0]], vertices[faces[0] + 1], vertices[faces[0] + 2]),
-                    p2 = new Vector3(vertices[faces[2]], vertices[faces[2] + 1], vertices[faces[2] + 2]),
-                    p3 = new Vector3(vertices[faces[4]], vertices[faces[4] + 1], vertices[faces[4] + 2]);
-            this.normal = p1.minus(p2).crossProduct(p3.minus(p2));
-        }
-        else {
-            this.normal = Vector3.zero();
-        }
+    private WorldPolygon(List<Vector3> vertices, Vector3 normal, WorldPolygon backFace) {
+        this(vertices, normal);
 
-        createTriangleMesh(vertices, texCoords, faces);
-
-        setMaterial(new PhongMaterial(Color.RED));
+        this.backFace = backFace;
     }
 
     public WorldPolygon(List<Vector3> vertices, Vector3 normal) {
         transformUpdater = new TransformUpdater(this, transform);
         this.normal = normal;
+        this.vertices = vertices;
         if (vertices.isEmpty()) {
             return;
         }
@@ -95,8 +77,6 @@ public class WorldPolygon extends MeshView implements Object3D {
         }
 
         createTriangleMesh(localSpaceVertices, new float[2], faceArray);
-
-        setMaterial(new PhongMaterial(Color.color(1, 0, 0, 0.8)));
     }
 
     private void createTriangleMesh(float[] vertices, float[] texCoords, int[] faces) {
@@ -107,7 +87,18 @@ public class WorldPolygon extends MeshView implements Object3D {
         triangleMesh.getFaces().addAll(faces);
         setMesh(triangleMesh);
         setDrawMode(DrawMode.FILL);
-        setCullFace(CullFace.NONE);
+        setCullFace(CullFace.BACK);
+        PhongMaterial material = new PhongMaterial(Color.color(1, 0, 0, 0.75));
+        setMaterial(material);
+    }
+
+    public WorldPolygon getBackFace()
+    {
+        if (backFace == null) {
+            List<Vector3> worldspaceVertices = vertices.stream().map(v -> v.plus(transform.getPositionReadonly())).collect(Collectors.toList());
+            backFace = new WorldPolygon(worldspaceVertices, normal.multiply(-1), this);
+        }
+        return backFace;
     }
 
     @Override

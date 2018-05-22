@@ -1,7 +1,7 @@
-package ZoneVisualizer;
+package ZoneVisualizer.Views;
 
-import ZoneVisualizer.Debugging.CheatPanel;
 import ZoneVisualizer.Utility.LINQ;
+import ZoneVisualizer.ZoneVisualization;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -74,7 +74,7 @@ public class ZoneVisualizationApp extends Application {
         TransformGroup subParent = new TransformGroup();
         subParent.setAutoSizeChildren(false);
         gizmo = new Gizmo3D(0.1, 25);
-        subParent.getChildren().addAll(subRoot, gizmo);
+        subParent.getChildren().addAll(gizmo, subRoot);
 
         CameraContext cameraContext = new CameraContext(camera, subParent.getTransform());
         cameraTransform = cameraContext.getFakeCameraTransform();
