@@ -1,15 +1,12 @@
 package ZoneVisualizer.GraphicalElements;
 
-import ZoneVisualizer.Utility.LINQ;
 import ZoneVisualizer.Utility.PointSortByAngleIn3D;
-import ZoneVisualizer.Utility.Utility;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class WorldPolygon extends MeshView implements Object3D {
 

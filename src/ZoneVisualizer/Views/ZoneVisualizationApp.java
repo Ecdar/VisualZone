@@ -1,19 +1,15 @@
 package ZoneVisualizer.Views;
 
-import ZoneVisualizer.Utility.LINQ;
-import ZoneVisualizer.ZoneVisualization;
+import ZoneVisualizer.Constraints.Clock;
+import ZoneVisualizer.GraphicalElements.Vector3;
 import javafx.application.Application;
-import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.scene.*;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.Group;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Shape3D;
 import javafx.stage.Stage;
-import ZoneVisualizer.Constraints.Clock;
-import ZoneVisualizer.GraphicalElements.*;
 
 import java.util.Arrays;
 import java.util.Collection;
