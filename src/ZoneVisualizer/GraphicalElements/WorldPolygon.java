@@ -96,7 +96,7 @@ public class WorldPolygon extends MeshView implements Object3D {
 
         createTriangleMesh(localSpaceVertices, new float[2], faceArray);
 
-        setMaterial(new PhongMaterial(Color.RED));
+        setMaterial(new PhongMaterial(Color.color(1, 0, 0, 0.8)));
     }
 
     private void createTriangleMesh(float[] vertices, float[] texCoords, int[] faces) {
