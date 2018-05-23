@@ -14,7 +14,7 @@ import java.util.Collection;
 public class Scene3D extends SubScene {
 
     private final Camera3D camera;
-    private final ObservableList<Node> zone3DUI;
+    private final ObservableList<Node> zone3DContent;
     private final WorldTransform cameraTransform;
     private final Gizmo3D gizmo;
 
@@ -30,7 +30,7 @@ public class Scene3D extends SubScene {
 
         Group subRoot = new Group();
         subRoot.setAutoSizeChildren(false);
-        zone3DUI = subRoot.getChildren();
+        zone3DContent = subRoot.getChildren();
         TransformGroup subParent = new TransformGroup();
         subParent.setAutoSizeChildren(false);
         gizmo = new Gizmo3D(0.1, 25);
@@ -51,8 +51,16 @@ public class Scene3D extends SubScene {
     }
 
     public void set3DContent(Collection<? extends Shape3D> content) {
-        zone3DUI.clear();
-        zone3DUI.addAll(content);
+        zone3DContent.clear();
+        add3DContent(content);
+    }
+
+    public void add3DContent(Collection<? extends Shape3D> content) {
+        zone3DContent.addAll(content);
+    }
+
+    public void remove3DContent(Collection<? extends Shape3D> content) {
+        zone3DContent.removeAll(content);
     }
 
     public void setCamera2D(Vector3 focusPoint, Clock clock1, Clock clock2) {

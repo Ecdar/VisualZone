@@ -1,13 +1,20 @@
 package ZoneVisualizer.Views;
 
+import ZoneVisualizer.GraphicalElements.WorldSphere;
+import ZoneVisualizer.ZoneVisualization;
 import javafx.event.ActionEvent;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Shape3D;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class PointCreationView extends GridPane {
@@ -15,6 +22,8 @@ public class PointCreationView extends GridPane {
     private final NumericField xField = new NumericField("0");
     private final NumericField yField = new NumericField("0");
     private final NumericField zField = new NumericField("0");
+
+    private final Collection<Shape3D> points = new ArrayList<>();
 
     public PointCreationView(double width) {
         setPrefWidth(width);
@@ -66,8 +75,18 @@ public class PointCreationView extends GridPane {
     }
 
     private void addPoint(ActionEvent event) {
+        double x = Double.parseDouble(xField.getText()),
+               y = Double.parseDouble(yField.getText()),
+               z = Double.parseDouble(zField.getText());
+        WorldSphere point = new WorldSphere(.3);
+        point.getTransform().setPosition(x, y, z);
+        point.setMaterial(new PhongMaterial(Color.PURPLE));
+        points.add(point);
+        ZoneVisualizationApp.add3DContent(point);
     }
 
     private void clearPoints(ActionEvent event) {
+        ZoneVisualizationApp.remove3DContent(points);
+        points.clear();
     }
 }

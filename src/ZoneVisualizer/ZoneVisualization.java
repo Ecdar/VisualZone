@@ -23,6 +23,7 @@ public class ZoneVisualization {
 
     private static ArrayList<Clock> currentClockDimensions = new ArrayList<>();
     private static Zone zone;
+    private static Collection<WorldPolygon> visualizedZone;
 
     public static void initialize(List<Clock> clockList, List<Constraint> constraintList, double maxValue) {
         clocks.clear();
@@ -84,11 +85,19 @@ public class ZoneVisualization {
     }
 
     private static Vector3 find3DContentAndCenter(Projector projector) {
+        //Remove old visualization
+        if (visualizedZone != null) {
+            ZoneVisualizationApp.remove3DContent(visualizedZone);
+        }
+        //Show new visualization
         Collection<WorldPolygon> projectedZoneFaces = projector.project(zone);
         Collection<WorldPolygon> sceneContent = new ArrayList<>();
         projectedZoneFaces.forEach(face -> sceneContent.add(face.getBackFace()));
         sceneContent.addAll(projectedZoneFaces);
-        ZoneVisualizationApp.set3DContent(sceneContent);
+        ZoneVisualizationApp.add3DContent(sceneContent);
+        visualizedZone = sceneContent;
+
+        //Find center of projected content
         Vector3 center = new Vector3();
         List<Vector3> facePositions = projectedZoneFaces.stream()
                 .map(f -> f.getTransform().getPositionReadonly()).collect(Collectors.toList());

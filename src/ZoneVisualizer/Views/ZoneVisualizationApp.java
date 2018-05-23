@@ -60,6 +60,22 @@ public class ZoneVisualizationApp extends Application {
         sub3DScene.set3DContent(content);
     }
 
+    public static void add3DContent(Shape3D... content) {
+        add3DContent(Arrays.asList(content));
+    }
+
+    public static void add3DContent(Collection<? extends Shape3D> content) {
+        sub3DScene.add3DContent(content);
+    }
+
+    public static void remove3DContent(Shape3D... content) {
+        remove3DContent(Arrays.asList(content));
+    }
+
+    public static void remove3DContent(Collection<? extends Shape3D> content) {
+        sub3DScene.remove3DContent(content);
+    }
+
     public static void setCamera2D(Vector3 focusPoint, Clock clock1, Clock clock2) {
         sub3DScene.setCamera2D(focusPoint, clock1, clock2);
     }
