@@ -1,4 +1,10 @@
 package ZoneVisualizer.Views;
 
-public class PointCreationView {
+import javafx.scene.layout.GridPane;
+
+public class PointCreationView extends GridPane {
+
+    public PointCreationView() {
+
+    }
 }

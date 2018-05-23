@@ -32,7 +32,7 @@ public class ZoneVisualizationApp extends Application {
         dimensionListView = new DimensionListView();
 
         VBox leftBarParent = new VBox(5);
-        leftBarParent.getChildren().addAll(dimensionListView, new CheatPanel());
+        leftBarParent.getChildren().addAll(dimensionListView, new PointCreationView(), new CheatPanel());
 
         HBox parent = new HBox(10);
         parent.getChildren().addAll(leftBarParent, sub3DScene);
