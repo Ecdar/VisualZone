@@ -9,14 +9,18 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape3D;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class Scene3D extends SubScene {
 
     private final Camera3D camera;
-    private final ObservableList<Node> zone3DContent;
+    private final ObservableList<Node> scene3DContent;
     private final WorldTransform cameraTransform;
     private final Gizmo3D gizmo;
+
+    private final Collection<Shape3D> zone3DContent = new ArrayList<>();
+    private final Collection<Shape3D> other3DContent = new ArrayList<>();
 
     public Scene3D(double width, double height) {
         this(width, height, true, SceneAntialiasing.BALANCED);
@@ -30,7 +34,7 @@ public class Scene3D extends SubScene {
 
         Group subRoot = new Group();
         subRoot.setAutoSizeChildren(false);
-        zone3DContent = subRoot.getChildren();
+        scene3DContent = subRoot.getChildren();
         TransformGroup subParent = new TransformGroup();
         subParent.setAutoSizeChildren(false);
         gizmo = new Gizmo3D(0.1, 25);
@@ -50,17 +54,31 @@ public class Scene3D extends SubScene {
         addEventHandler(MouseEvent.ANY, cameraContext::handleMouseDrag);
     }
 
-    public void set3DContent(Collection<? extends Shape3D> content) {
+    public void setZone(Collection<? extends Shape3D> content) {
         zone3DContent.clear();
+        zone3DContent.addAll(content);
+        updateSceneView();
+    }
+
+    public void set3DContent(Collection<? extends Shape3D> content) {
+        other3DContent.clear();
         add3DContent(content);
     }
 
     public void add3DContent(Collection<? extends Shape3D> content) {
-        zone3DContent.addAll(content);
+        other3DContent.addAll(content);
+        updateSceneView();
     }
 
     public void remove3DContent(Collection<? extends Shape3D> content) {
-        zone3DContent.removeAll(content);
+        other3DContent.removeAll(content);
+        scene3DContent.removeAll(content);
+    }
+
+    private void updateSceneView() {
+        scene3DContent.clear();
+        scene3DContent.addAll(other3DContent);
+        scene3DContent.addAll(zone3DContent);
     }
 
     public void setCamera2D(Vector3 focusPoint, Clock clock1, Clock clock2) {

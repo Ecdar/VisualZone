@@ -85,16 +85,12 @@ public class ZoneVisualization {
     }
 
     private static Vector3 find3DContentAndCenter(Projector projector) {
-        //Remove old visualization
-        if (visualizedZone != null) {
-            ZoneVisualizationApp.remove3DContent(visualizedZone);
-        }
         //Show new visualization
         Collection<WorldPolygon> projectedZoneFaces = projector.project(zone);
         Collection<WorldPolygon> sceneContent = new ArrayList<>();
         projectedZoneFaces.forEach(face -> sceneContent.add(face.getBackFace()));
         sceneContent.addAll(projectedZoneFaces);
-        ZoneVisualizationApp.add3DContent(sceneContent);
+        ZoneVisualizationApp.set3DZone(sceneContent);
         visualizedZone = sceneContent;
 
         //Find center of projected content

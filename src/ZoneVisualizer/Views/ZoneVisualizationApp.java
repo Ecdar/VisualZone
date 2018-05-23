@@ -52,6 +52,10 @@ public class ZoneVisualizationApp extends Application {
         dimensionListView.setDisableRemainingClockDimensions(disable);
     }
 
+    public static void set3DZone(Collection<? extends Shape3D> content) {
+        sub3DScene.setZone(content);
+    }
+
     public static void set3DContent(Shape3D... content) {
         set3DContent(Arrays.asList(content));
     }
