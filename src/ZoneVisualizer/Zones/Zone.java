@@ -4,6 +4,7 @@ import ZoneVisualizer.Constraints.*;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import ZoneVisualizer.Utility.LINQ;
+import javafx.scene.paint.Color;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -132,7 +133,7 @@ public class Zone {
                     .collect(Collectors.toList());
             Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
 
-            return new WorldPolygon(projectedVertices, vNormal.multiply(-1));
+            return new WorldPolygon(projectedVertices, vNormal.multiply(-1), Color.color(1, 0, 0, 0.75));
         }
 
         public WorldPolygon project(Clock dimension1, Clock dimension2, Clock dimension3, BiFunction<Vertex, Clock, Double> mapper) {
@@ -142,7 +143,7 @@ public class Zone {
                     .collect(Collectors.toList());
             Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
 
-            return new WorldPolygon(projectedVertices, vNormal.multiply(-1));
+            return new WorldPolygon(projectedVertices, vNormal.multiply(-1), Color.color(1, 0, 0, 0.75));
         }
 
         public List<Integer> getVerticeIndices() {

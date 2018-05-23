@@ -2,6 +2,8 @@ package ZoneVisualizer.GraphicalElements;
 
 import ZoneVisualizer.Utility.PointSortByAngleIn3D;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Material;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 
@@ -14,15 +16,21 @@ public class WorldPolygon extends MeshView implements Object3D {
     private final TransformUpdater transformUpdater;
     private final Vector3 normal;
     private final List<Vector3> vertices;
+    private final Material material;
     private WorldPolygon backFace;
 
-    private WorldPolygon(List<Vector3> vertices, Vector3 normal, WorldPolygon backFace) {
-        this(vertices, normal);
+    private WorldPolygon(List<Vector3> vertices, Vector3 normal, WorldPolygon backFace, Material material) {
+        this(vertices, normal, material);
 
         this.backFace = backFace;
     }
 
-    public WorldPolygon(List<Vector3> vertices, Vector3 normal) {
+    public WorldPolygon(List<Vector3> vertices, Vector3 normal, Color color) {
+        this(vertices, normal, new PhongMaterial(color));
+    }
+
+    public WorldPolygon(List<Vector3> vertices, Vector3 normal, Material material) {
+        this.material = material;
         transformUpdater = new TransformUpdater(this, transform);
         this.normal = normal;
         this.vertices = vertices;
@@ -74,6 +82,7 @@ public class WorldPolygon extends MeshView implements Object3D {
         }
 
         createTriangleMesh(localSpaceVertices, new float[2], faceArray);
+        setMaterial(material);
     }
 
     private void createTriangleMesh(float[] vertices, float[] texCoords, int[] faces) {
@@ -85,15 +94,13 @@ public class WorldPolygon extends MeshView implements Object3D {
         setMesh(triangleMesh);
         setDrawMode(DrawMode.FILL);
         setCullFace(CullFace.BACK);
-        PhongMaterial material = new PhongMaterial(Color.color(1, 0, 0, 0.75));
-        setMaterial(material);
     }
 
     public WorldPolygon getBackFace()
     {
         if (backFace == null) {
             List<Vector3> worldspaceVertices = vertices.stream().map(v -> v.plus(transform.getPositionReadonly())).collect(Collectors.toList());
-            backFace = new WorldPolygon(worldspaceVertices, normal.multiply(-1), this);
+            backFace = new WorldPolygon(worldspaceVertices, normal.multiply(-1), this, material);
         }
         return backFace;
     }

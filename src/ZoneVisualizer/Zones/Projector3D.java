@@ -5,6 +5,7 @@ import ZoneVisualizer.Constraints.Constraint;
 import ZoneVisualizer.Constraints.TwoClockConstraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
+import javafx.scene.paint.Color;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,13 +49,14 @@ public class Projector3D extends Projector {
         Double minZ = getMinFromMappedValues(projectedVertices, vertex -> vertex.z);
         Double maxZ = getMaxFromMappedValues(projectedVertices, vertex -> vertex.z);
 
+        Color faceColor = Color.color(1, 0, 0, 0.75);
         List<Vector3> hullVertices = null;
         List<Vector3> planeVertices = projectedVertices.stream()
                 .filter(v -> v.x == minX)
                 .collect(Collectors.toList());
         if (planeVertices.size() >= 3) {
             hullVertices = getHullVerticesOfXPlane(planeVertices);
-            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.left()));
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.left(), faceColor));
         }
 
         planeVertices = projectedVertices.stream()
@@ -62,7 +64,7 @@ public class Projector3D extends Projector {
                 .collect(Collectors.toList());
         if (planeVertices.size() >= 3) {
             hullVertices = getHullVerticesOfXPlane(planeVertices);
-            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.right()));
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.right(), faceColor));
         }
 
         planeVertices = projectedVertices.stream()
@@ -70,7 +72,7 @@ public class Projector3D extends Projector {
                 .collect(Collectors.toList());
         if (planeVertices.size() >= 3) {
             hullVertices = getHullVerticesOfYPlane(planeVertices);
-            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.down()));
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.down(), faceColor));
         }
 
         planeVertices = projectedVertices.stream()
@@ -78,7 +80,7 @@ public class Projector3D extends Projector {
                 .collect(Collectors.toList());
         if (planeVertices.size() >= 3) {
             hullVertices = getHullVerticesOfYPlane(planeVertices);
-            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.up()));
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.up(), faceColor));
         }
 
         planeVertices = projectedVertices.stream()
@@ -86,7 +88,7 @@ public class Projector3D extends Projector {
                 .collect(Collectors.toList());
         if (planeVertices.size() >= 3) {
             hullVertices = getHullVerticesOfZPlane(planeVertices);
-            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.back()));
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.back(), faceColor));
         }
 
         planeVertices = projectedVertices.stream()
@@ -94,7 +96,7 @@ public class Projector3D extends Projector {
                 .collect(Collectors.toList());
         if (planeVertices.size() >= 3) {
             hullVertices = getHullVerticesOfZPlane(planeVertices);
-            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.forward()));
+            projectedPolygons.add(new WorldPolygon(hullVertices, Vector3.forward(), faceColor));
         }
 
         //Finds the two clock constraint faces (tilted faces)

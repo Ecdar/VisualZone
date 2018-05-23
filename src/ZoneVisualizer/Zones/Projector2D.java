@@ -3,6 +3,7 @@ package ZoneVisualizer.Zones;
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
+import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +26,8 @@ public class Projector2D extends Projector {
             return new ArrayList<>();
         }
         List<Vector3> projectedVertices = new ArrayList<>();
+        Collection<Vertex> xInfiniteVertices = new ArrayList<>();
+        Collection<Vertex> yInfiniteVertices = new ArrayList<>();
 
         for (Vertex vertex : zone.getVertices()) {
             Vector3 projectedVertex = new Vector3(vertex.getVisualCoordinate(dimension1, maxValue),
@@ -36,6 +39,6 @@ public class Projector2D extends Projector {
         List<Vector3> hullVertices = getHullVerticesOfZPlane(projectedVertices);
         //Todo show infinite zones with more than double size face
 
-        return Arrays.asList(new WorldPolygon(hullVertices, Vector3.back()));
+        return Arrays.asList(new WorldPolygon(hullVertices, Vector3.back(), Color.RED));
     }
 }
