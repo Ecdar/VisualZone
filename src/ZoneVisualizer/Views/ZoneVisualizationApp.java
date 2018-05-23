@@ -29,10 +29,10 @@ public class ZoneVisualizationApp extends Application {
 
     private static Parent setupScene() throws Exception {
         sub3DScene = new Scene3D(640, 480);
-        dimensionListView = new DimensionListView();
+        dimensionListView = new DimensionListView(240);
 
         VBox leftBarParent = new VBox(5);
-        leftBarParent.getChildren().addAll(dimensionListView, new PointCreationView(), new CheatPanel());
+        leftBarParent.getChildren().addAll(dimensionListView, new PointCreationView(240), new CheatPanel());
 
         HBox parent = new HBox(10);
         parent.getChildren().addAll(leftBarParent, sub3DScene);

@@ -16,10 +16,10 @@ public class DimensionListView extends ScrollPane {
 
     private final ObservableList<Node> dimensionUI;
 
-    public DimensionListView() {
+    public DimensionListView(double width) {
         setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        setPrefWidth(240);
+        setPrefWidth(width);
         setFitToHeight(true);
 
         VBox dimensionRoot = new VBox(5);
