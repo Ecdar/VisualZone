@@ -16,6 +16,14 @@ public abstract class Constraint {
         this.nValue = nValue;
     }
 
+    public static SingleClockConstraint zeroBound(Clock dimension) {
+        return new SingleClockConstraint(Inequality.GreaterThan, true, 0, dimension);
+    }
+
+    public static SingleClockConstraint infinityBound(Clock dimension) {
+        return new SingleClockConstraint(Inequality.LessThan, true, Double.POSITIVE_INFINITY, dimension);
+    }
+
     public Inequality getInequality() {
         return inequality;
     }

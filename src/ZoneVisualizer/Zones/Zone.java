@@ -8,7 +8,6 @@ import javafx.scene.paint.Color;
 
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Zone {
@@ -21,7 +20,7 @@ public class Zone {
     public Zone(Collection<Constraint> constraints, Collection<Clock> clocks, double maxValue) {
         this.maxValue = maxValue;
         infinityValue = 2 * maxValue;
-        ConstraintZone constraintZone = new ConstraintZone(constraints);
+        ConstraintZone constraintZone = new ConstraintZone(constraints, clocks);
         vertices = new ArrayList<>();
         faces = new HashMap<>();
         if (constraintZone.isRestrictedToEmptiness()) {
@@ -54,52 +53,75 @@ public class Zone {
 
     private Vertex findOrigin(ConstraintZone constraintZone, Collection<Clock> clocks) {
         Vertex origin = new Vertex(clocks);
-        Collection<Clock> delayedDimensions = new ArrayList<>();
+        List<Clock> unknownDimensions = new ArrayList<>();
+        List<Clock> knownDimensions = new ArrayList<>();
+        //Handle trivial case
         for (Clock clock : clocks) {
             Constraint c = constraintZone.getMinConstraint(clock);
             if (c != null) {
                 //Simple case; a greater than constraint exists for this dimension
                 origin.addConstraint(clock, c);
-            }
-            else if (constraintZone.getTCConstraintBySecondary(clock).isEmpty()) {
-                //No bounds on this dimension. Add an implicit greater than 0 bound
-                origin.addConstraint(clock, new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
+                knownDimensions.add(clock);
             }
             else {
-                delayedDimensions.add(clock);
+                unknownDimensions.add(clock);
             }
         }
-        for (Clock clock : delayedDimensions) {
-            Collection<TwoClockConstraint> twoClockMaxConstraints = constraintZone.getTCConstraintBySecondary(clock);
-            if (!twoClockMaxConstraints.isEmpty()) {
-                //There exists one or more two clock constraints bounding the minimum value of this dimension
-                //Find the highest minimum bound. Can be several constraints if origin is degenerate
-                Map<TwoClockConstraint, Double> valueMap = new HashMap<>();
-                for (TwoClockConstraint tcc : twoClockMaxConstraints) {
-                    double otherDimValue = 0;
-                    if (!delayedDimensions.contains(tcc.getClock1())) {
-                        otherDimValue = origin.getCoordinate(tcc.getClock1());
-                    }
-                    double value = tcc.getOtherValue(tcc.getClock1(), otherDimValue);
-                    valueMap.put(tcc, value);
+        //Find the TCC's that can bound the unknown dimensions
+        Map<Clock, Collection<TwoClockConstraint>> unresolvedConstraintsOnDimensions = new HashMap<>();
+        Map<Clock, Set<Constraint>> candidatesOnDimension = new HashMap<>();
+        Map<Clock, Double> maxValues = new HashMap<>();
+        for (Clock unknownDimension : unknownDimensions) {
+            unresolvedConstraintsOnDimensions.put(unknownDimension, constraintZone.getTCConstraintBySecondary(unknownDimension));
+            candidatesOnDimension.put(unknownDimension, new HashSet<>());
+            maxValues.put(unknownDimension, (double)0);
+        }
+        //Resolve the remaining TCC's
+        for (int i = 0; i < knownDimensions.size(); i++) {
+            Clock knownDimension = knownDimensions.get(i);
+            Collection<TwoClockConstraint> pairings = constraintZone.getTCConstraintByPrimary(knownDimension);
+            if (pairings.isEmpty()) {
+                //Doesn't solve anything
+                continue;
+            }
+            for (TwoClockConstraint pairing : pairings) {
+                Clock otherClock = pairing.getClock2();
+                if (!unresolvedConstraintsOnDimensions.containsKey(otherClock)) {
+                    //Dimension is already solved as a trivial case
+                    continue;
                 }
-                double originNValue = twoClockMaxConstraints.stream()
-                        .map(valueMap::get)
-                        .min(Double::compareTo).get();
-                Collection<Constraint> maximizedMinBounds = twoClockMaxConstraints.stream()
-                        .filter(tcc -> valueMap.get(tcc) == originNValue)
-                        .collect(Collectors.toList());
-                TwoClockConstraint tcc = (TwoClockConstraint)LINQ.first(maximizedMinBounds);
-                if (valueMap.get(tcc) > 0) {
-                    origin.addConstraints(clock, maximizedMinBounds);
+                double valuation = pairing.getOtherValue(knownDimension, origin.getCoordinate(knownDimension));
+                Collection<TwoClockConstraint> constraintsOnThis = unresolvedConstraintsOnDimensions.get(otherClock);
+                Collection<Constraint> candidatesOnThis = candidatesOnDimension.get(otherClock);
+                Double maxOnThis = maxValues.get(otherClock);
+                if (valuation == maxOnThis) {
+                    constraintsOnThis.remove(pairing);
+                    candidatesOnThis.add(pairing);
+                }
+                else if (valuation > maxOnThis) {
+                    constraintsOnThis.remove(pairing);
+                    candidatesOnThis.clear();
+                    candidatesOnThis.add(pairing);
+                    maxValues.put(otherClock, valuation);
                 }
                 else {
-                    //No TCC is more restrictive than the 0 bound.
-                    origin.addConstraint(clock, new SingleClockConstraint(Inequality.GreaterThan, true, 0, clock));
+                    //Not feasible
+                    constraintsOnThis.remove(pairing);
                 }
+                if (!constraintsOnThis.isEmpty()) {
+                    continue;
+                }
+                //Found a pairing for all tcc's of dimension. Resolve
+                if (candidatesOnThis.isEmpty()) {
+                    candidatesOnThis.add(Constraint.zeroBound(otherClock));
+                }
+                origin.addConstraints(otherClock, candidatesOnThis);
+                knownDimensions.add(otherClock);
+                unknownDimensions.remove(otherClock);
+                unresolvedConstraintsOnDimensions.remove(otherClock);
             }
-
         }
+
         return origin;
     }
 

@@ -106,6 +106,10 @@ public class LINQ {
         map.get(key).addAll(values);
     }
 
+    public static <T> Collection<T> getMaximums(Collection<? extends T> collection, Function<T, Double> valueFunction) {
+        return getMinimums(collection, valueFunction.andThen(d -> -d));
+    }
+
     public static <T> Collection<T> getMinimums(Collection<? extends T> collection, Function<T, Double> valueFunction) {
         if (collection.isEmpty()) {
             return new ArrayList<>();
