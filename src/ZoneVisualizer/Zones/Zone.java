@@ -112,9 +112,6 @@ public class Zone {
                     continue;
                 }
                 //Found a pairing for all tcc's of dimension. Resolve
-                if (candidatesOnThis.isEmpty()) {
-                    candidatesOnThis.add(Constraint.zeroBound(otherClock));
-                }
                 origin.addConstraints(otherClock, candidatesOnThis);
                 knownDimensions.add(otherClock);
                 unknownDimensions.remove(otherClock);
