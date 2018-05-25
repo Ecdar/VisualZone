@@ -13,19 +13,13 @@ public class ConstraintZone {
     private final Map<Clock, Map<Clock, TwoClockConstraint>> twoClockConstraintsBySecondary = new HashMap<>();
     private boolean restrictedToEmptiness = false;
 
-    public ConstraintZone(Collection<Constraint> constraints, Collection<Clock> clocks) {
+    public ConstraintZone(Collection<Constraint> constraints) {
         for (Constraint constraint : constraints) {
             if (constraint instanceof SingleClockConstraint) {
                 if (addSingleClockConstraint((SingleClockConstraint)constraint)) return;
             }
             else if (constraint instanceof TwoClockConstraint) {
                 if (addTwoClockConstraint((TwoClockConstraint)constraint)) return;
-            }
-        }
-        //Add the implicit greater than 0 bounds
-        for (Clock clock : clocks) {
-            if (!minBoundConstraints.containsKey(clock)) {
-                minBoundConstraints.put(clock, Constraint.zeroBound(clock));
             }
         }
 

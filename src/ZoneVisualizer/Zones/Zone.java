@@ -20,7 +20,7 @@ public class Zone {
     public Zone(Collection<Constraint> constraints, Collection<Clock> clocks, double maxValue) {
         this.maxValue = maxValue;
         infinityValue = 2 * maxValue;
-        ConstraintZone constraintZone = new ConstraintZone(constraints, clocks);
+        ConstraintZone constraintZone = new ConstraintZone(constraints);
         vertices = new ArrayList<>();
         faces = new HashMap<>();
         if (constraintZone.isRestrictedToEmptiness()) {
@@ -63,27 +63,27 @@ public class Zone {
                 origin.addConstraint(clock, c);
                 knownDimensions.add(clock);
             }
+            else if (constraintZone.getTCConstraintBySecondary(clock).isEmpty()) {
+                //No bounds on this dimension. Add an implicit greater than 0 bound
+                origin.addConstraint(clock, Constraint.zeroBound(clock));
+            }
             else {
                 unknownDimensions.add(clock);
             }
         }
         //Find the TCC's that can bound the unknown dimensions
         Map<Clock, Collection<TwoClockConstraint>> unresolvedConstraintsOnDimensions = new HashMap<>();
-        Map<Clock, Set<Constraint>> candidatesOnDimension = new HashMap<>();
+        Map<Clock, Set<TwoClockConstraint>> candidatesOnDimensions = new HashMap<>();
         Map<Clock, Double> maxValues = new HashMap<>();
         for (Clock unknownDimension : unknownDimensions) {
             unresolvedConstraintsOnDimensions.put(unknownDimension, constraintZone.getTCConstraintBySecondary(unknownDimension));
-            candidatesOnDimension.put(unknownDimension, new HashSet<>());
+            candidatesOnDimensions.put(unknownDimension, new HashSet<>());
             maxValues.put(unknownDimension, (double)0);
         }
-        //Resolve the remaining TCC's
+        //Resolve TCC's
         for (int i = 0; i < knownDimensions.size(); i++) {
             Clock knownDimension = knownDimensions.get(i);
             Collection<TwoClockConstraint> pairings = constraintZone.getTCConstraintByPrimary(knownDimension);
-            if (pairings.isEmpty()) {
-                //Doesn't solve anything
-                continue;
-            }
             for (TwoClockConstraint pairing : pairings) {
                 Clock otherClock = pairing.getClock2();
                 if (!unresolvedConstraintsOnDimensions.containsKey(otherClock)) {
@@ -92,16 +92,14 @@ public class Zone {
                 }
                 double valuation = pairing.getOtherValue(knownDimension, origin.getCoordinate(knownDimension));
                 Collection<TwoClockConstraint> constraintsOnThis = unresolvedConstraintsOnDimensions.get(otherClock);
-                Collection<Constraint> candidatesOnThis = candidatesOnDimension.get(otherClock);
+                Collection<TwoClockConstraint> candidatesOnThis = candidatesOnDimensions.get(otherClock);
                 Double maxOnThis = maxValues.get(otherClock);
                 if (valuation == maxOnThis) {
-                    constraintsOnThis.remove(pairing);
-                    candidatesOnThis.add(pairing);
+                    move(pairing, constraintsOnThis, candidatesOnThis);
                 }
                 else if (valuation > maxOnThis) {
-                    constraintsOnThis.remove(pairing);
                     candidatesOnThis.clear();
-                    candidatesOnThis.add(pairing);
+                    move(pairing, constraintsOnThis, candidatesOnThis);
                     maxValues.put(otherClock, valuation);
                 }
                 else {
@@ -112,10 +110,49 @@ public class Zone {
                     continue;
                 }
                 //Found a pairing for all tcc's of dimension. Resolve
-                origin.addConstraints(otherClock, candidatesOnThis);
+                if (candidatesOnThis.isEmpty()) {
+                    origin.addConstraint(otherClock, Constraint.zeroBound(otherClock));
+                }
+                else {
+                    origin.addConstraints(otherClock, candidatesOnThis);
+                }
                 knownDimensions.add(otherClock);
                 unknownDimensions.remove(otherClock);
                 unresolvedConstraintsOnDimensions.remove(otherClock);
+            }
+        }
+        Set<Clock> optimizableDimensions = new HashSet<>(unknownDimensions);
+        while (!optimizableDimensions.isEmpty()) {
+            Clock optimizableDimension = LINQ.first(optimizableDimensions);
+            optimizableDimensions.remove(optimizableDimension);
+            double minMaxValue = maxValues.get(optimizableDimension);
+            for (Clock unresolvedDimension : new ArrayList<>(unresolvedConstraintsOnDimensions.keySet())) {
+                if (unresolvedDimension == optimizableDimension) {
+                    continue;
+                }
+                double minMaxOnThis = maxValues.get(unresolvedDimension);
+                Collection<TwoClockConstraint> unresolvedOnThis = unresolvedConstraintsOnDimensions.get(unresolvedDimension);
+                Set<TwoClockConstraint> candidatesOnThis = candidatesOnDimensions.get(unresolvedDimension);
+                for (TwoClockConstraint optimization : unresolvedOnThis.stream()
+                        .filter(c -> c.getClock1() == optimizableDimension)
+                        .collect(Collectors.toList())) {
+                    double optimizationValuation = optimization.getOtherValue(optimizableDimension, minMaxValue);
+                    if (optimizationValuation == minMaxOnThis) {
+                        move(optimization, unresolvedOnThis, candidatesOnThis);
+                    }
+                    else if (optimizationValuation > minMaxOnThis) {
+                        //Todo Not necessarily all candidates are still unresolved
+                        unresolvedOnThis.addAll(candidatesOnThis);
+                        candidatesOnThis.clear();
+                        move(optimization, unresolvedOnThis, candidatesOnThis);
+                        minMaxOnThis = optimizationValuation;
+                        maxValues.put(unresolvedDimension, minMaxOnThis);
+                    }
+                }
+                if (!unresolvedOnThis.isEmpty()) {
+                    continue;
+                }
+                //Todo resolve
             }
         }
 
@@ -135,6 +172,11 @@ public class Zone {
 
     public Map<Constraint, Face> getFaces() {
         return new HashMap<>(faces);
+    }
+
+    private static <T> void move(T object, Collection<? extends T> from, Collection<? super T> to) {
+        from.remove(object);
+        to.add(object);
     }
 
     public class Face {
