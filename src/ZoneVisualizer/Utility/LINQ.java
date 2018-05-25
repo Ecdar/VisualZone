@@ -133,4 +133,14 @@ public class LINQ {
         }
         return minimumCandidates;
     }
+
+    public static <T> void move(T object, Collection<? extends T> from, Collection<? super T> to) {
+        to.add(object);
+        from.remove(object);
+    }
+
+    public static <T> void moveAll(Collection<T> objects, Collection<? extends T> from, Collection<? super T> to) {
+        to.addAll(objects);
+        from.removeAll(objects);
+    }
 }
