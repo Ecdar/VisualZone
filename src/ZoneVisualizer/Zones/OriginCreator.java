@@ -38,6 +38,10 @@ public class OriginCreator {
         }
 
         resolveRemainingDimensions();
+
+        while (!unknownDimensions.isEmpty()) {
+            resolveDimension(unknownDimensions.get(0));
+        }
     }
 
     private void decideTrivialDimensions(Collection<Clock> dimensions) {
@@ -142,6 +146,7 @@ public class OriginCreator {
     private void markClockKnown(Clock clock) {
         unknownDimensions.remove(clock);
         unresolvedConstraintsOnDimensions.remove(clock);
+        unresolvedCandidatesOnDimensions.remove(clock);
         candidatesOnDimensions.remove(clock);
         maxValues.remove(clock);
         optimizableDimensions.remove(clock);
