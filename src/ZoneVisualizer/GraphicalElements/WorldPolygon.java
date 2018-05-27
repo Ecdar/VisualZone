@@ -16,20 +16,16 @@ public class WorldPolygon extends MeshView implements Object3D {
     private final TransformUpdater transformUpdater;
     private final Vector3 normal;
     private final List<Vector3> vertices;
-    private final Material material;
+    private Material material;
     private WorldPolygon backFace;
 
-    private WorldPolygon(List<Vector3> vertices, Vector3 normal, WorldPolygon backFace, Material material) {
-        this(vertices, normal, material);
+    private WorldPolygon(List<Vector3> vertices, Vector3 normal, WorldPolygon backFace) {
+        this(vertices, normal);
 
         this.backFace = backFace;
     }
 
-    public WorldPolygon(List<Vector3> vertices, Vector3 normal, Color color) {
-        this(vertices, normal, new PhongMaterial(color));
-    }
-
-    public WorldPolygon(List<Vector3> vertices, Vector3 normal, Material material) {
+    public WorldPolygon(List<Vector3> vertices, Vector3 normal) {
         this.material = material;
         transformUpdater = new TransformUpdater(this, transform);
         this.normal = normal;
@@ -57,13 +53,13 @@ public class WorldPolygon extends MeshView implements Object3D {
             vertices.add(i, replace);
         }
 
-        if (normal.y != 0 && normal.x == 0 && normal.z == 0) {
-            //Up or down facing faces must sort reversed cause y is flipped
-            vertices.sort(new PointSortByAngleIn3D(normal, vertices.get(0)));
-        }
-        else {
-            vertices.sort(new PointSortByAngleIn3D(normal, vertices.get(0)).reversed());
-        }
+//        if (normal.y != 0 && normal.x == 0 && normal.z == 0) {
+//            //Up or down facing faces must sort reversed cause y is flipped
+//            vertices.sort(new PointSortByAngleIn3D(normal, vertices.get(0)));
+//        }
+//        else {
+//        }
+        vertices.sort(new PointSortByAngleIn3D(normal, vertices.get(0)).reversed());
 
         float[] localSpaceVertices = new float[vertices.size() * 3];
         for (int i = 0; i < vertices.size(); i++) {
@@ -99,10 +95,19 @@ public class WorldPolygon extends MeshView implements Object3D {
     public WorldPolygon getBackFace()
     {
         if (backFace == null) {
-            List<Vector3> worldspaceVertices = vertices.stream().map(v -> v.plus(transform.getPositionReadonly())).collect(Collectors.toList());
-            backFace = new WorldPolygon(worldspaceVertices, normal.multiply(-1), this, material);
+            List<Vector3> worldSpaceVertices = vertices.stream().map(v -> v.plus(transform.getPositionReadonly())).collect(Collectors.toList());
+            backFace = new WorldPolygon(worldSpaceVertices, normal.multiply(-1), this);
+            backFace.setMaterial(material);
         }
         return backFace;
+    }
+
+    public void setColor(Color color) {
+        material = new PhongMaterial(color);
+        setMaterial(material);
+        if (backFace != null) {
+            backFace.setMaterial(material);
+        }
     }
 
     @Override

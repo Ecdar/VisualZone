@@ -1,18 +1,13 @@
 package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.*;
-import ZoneVisualizer.GraphicalElements.Vector3;
-import ZoneVisualizer.GraphicalElements.WorldPolygon;
-import ZoneVisualizer.Utility.LINQ;
-import javafx.scene.paint.Color;
 
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 public class Zone {
 
     protected final List<Vertex> vertices;
+    protected final List<Edge> edges;
     protected Map<Constraint, Face> faces;
     protected final double maxValue;
     protected final double infinityValue;
@@ -22,6 +17,7 @@ public class Zone {
         infinityValue = 2 * maxValue;
         ConstraintZone constraintZone = new ConstraintZone(constraints);
         vertices = new ArrayList<>();
+        edges = new ArrayList<>();
         faces = new HashMap<>();
         if (constraintZone.isRestrictedToEmptiness()) {
             return;
@@ -35,6 +31,7 @@ public class Zone {
 
             for (PivotResult pivotResult : pivot.useAsPivot()) {
                 pivotResult.findMissingConstraints(constraintZone, infinityValue);
+                edges.add(new Edge(pivot, pivotResult.getVertex()));
                 tryAddVertex(pivotResult.getVertex());
             }
         }
@@ -53,7 +50,7 @@ public class Zone {
 
     private void addVertexToFace(int vertexIndex, Constraint constraint) {
         if (!faces.containsKey(constraint)) {
-            faces.put(constraint, new Face(constraint));
+            faces.put(constraint, new Face(this, constraint));
         }
         faces.get(constraint).addVertexIndex(vertexIndex);
     }
@@ -66,44 +63,4 @@ public class Zone {
         return new HashMap<>(faces);
     }
 
-    public class Face {
-        private final List<Integer> verticeIndices = new ArrayList<>();
-        private final Constraint constraint;
-
-        public Face(Constraint constraint) {
-            this.constraint = constraint;
-        }
-
-        public WorldPolygon project(Clock dimension1, Clock dimension2, Clock dimension3) {
-            List<Vector3> projectedVertices = verticeIndices.stream()
-                    .map(i -> vertices.get(i))
-                    .map(v -> new Vector3(v.getCoordinate(dimension1), v.getCoordinate(dimension2), v.getCoordinate(dimension3)))
-                    .collect(Collectors.toList());
-            Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
-
-            return new WorldPolygon(projectedVertices, vNormal.multiply(-1), Color.color(1, 0, 0, 0.75));
-        }
-
-        public WorldPolygon project(Clock dimension1, Clock dimension2, Clock dimension3, BiFunction<Vertex, Clock, Double> mapper) {
-            List<Vector3> projectedVertices = verticeIndices.stream()
-                    .map(i -> vertices.get(i))
-                    .map(v -> new Vector3(mapper.apply(v, dimension1), mapper.apply(v, dimension2), mapper.apply(v, dimension3)))
-                    .collect(Collectors.toList());
-            Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
-
-            return new WorldPolygon(projectedVertices, vNormal.multiply(-1), Color.color(1, 0, 0, 0.75));
-        }
-
-        public List<Integer> getVerticeIndices() {
-            return verticeIndices;
-        }
-
-        public Constraint getConstraint() {
-            return constraint;
-        }
-
-        public void addVertexIndex(Integer index) {
-            verticeIndices.add(index);
-        }
-    }
 }

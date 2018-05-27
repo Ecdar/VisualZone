@@ -4,6 +4,7 @@ import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.TwoClockConstraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
+import javafx.scene.paint.Color;
 
 import java.util.Collection;
 import java.util.List;
@@ -12,13 +13,15 @@ import java.util.stream.Collectors;
 
 public abstract class Projector {
 
-    protected double maxValue;
+    protected final double maxValue;
+    protected final double infinityExtrusion;
 
-    public Projector(double maxValue) {
+    public Projector(double maxValue, double infinityExtrusion) {
         this.maxValue = maxValue;
+        this.infinityExtrusion = infinityExtrusion;
     }
 
-    public abstract Collection<WorldPolygon> project(Zone zone);
+    public abstract Collection<WorldPolygon> project(Zone zone, Color zoneColor);
 
     protected List<Vector3> getHullVerticesOfXPlane(List<Vector3> projectedVertices) {
         Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);

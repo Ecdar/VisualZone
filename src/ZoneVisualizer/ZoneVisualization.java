@@ -6,9 +6,10 @@ import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import ZoneVisualizer.Views.ZoneVisualizationApp;
 import ZoneVisualizer.Zones.Projector;
-import ZoneVisualizer.Zones.Projector2D;
-import ZoneVisualizer.Zones.Projector3D;
+import ZoneVisualizer.GraphicalElements.Projector2D;
+import ZoneVisualizer.GraphicalElements.Projector3D;
 import ZoneVisualizer.Zones.Zone;
+import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,7 +71,7 @@ public class ZoneVisualization {
     }
 
     private static void twoClocksSetup() {
-        Projector projector = new Projector2D(currentClockDimensions.get(0), currentClockDimensions.get(1), maximumValue);
+        Projector projector = new Projector2D(currentClockDimensions.get(0), currentClockDimensions.get(1), maximumValue, 0.1);
         Vector3 center = find3DContentAndCenter(projector);
         ZoneVisualizationApp.setCamera2D(center,
                 currentClockDimensions.get(0), currentClockDimensions.get(1));
@@ -78,7 +79,8 @@ public class ZoneVisualization {
 
     private static void threeClocksSetup() {
         ZoneVisualizationApp.setDisableRemainingClockDimensions(true);
-        Projector projector = new Projector3D(currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2), maximumValue);
+        Projector projector = new Projector3D(currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2),
+                maximumValue, 0.1);
         Vector3 center = find3DContentAndCenter(projector);
         ZoneVisualizationApp.setCamera3D(center,
                 currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
@@ -86,7 +88,7 @@ public class ZoneVisualization {
 
     private static Vector3 find3DContentAndCenter(Projector projector) {
         //Show new visualization
-        Collection<WorldPolygon> projectedZoneFaces = projector.project(zone);
+        Collection<WorldPolygon> projectedZoneFaces = projector.project(zone, Color.color(1, 0, 0, 0.75));
         Collection<WorldPolygon> sceneContent = new ArrayList<>();
         projectedZoneFaces.forEach(face -> sceneContent.add(face.getBackFace()));
         sceneContent.addAll(projectedZoneFaces);
