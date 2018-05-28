@@ -135,10 +135,6 @@ public class OriginCreator {
                         optimizableDimensions.add(unresolvedDimension);
                     }
                 }
-                if (unresolvedOnThis.isEmpty()) {
-                    //Found a pairing for all tcc's of dimension. Resolve
-                    resolveDimension(unresolvedDimension);
-                }
             }
         }
     }

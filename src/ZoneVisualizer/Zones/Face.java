@@ -2,6 +2,7 @@ package ZoneVisualizer.Zones;
 
 import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.Constraints.Constraint;
+import ZoneVisualizer.Constraints.SingleClockConstraint;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.GraphicalElements.WorldPolygon;
 import javafx.scene.paint.Color;
@@ -49,9 +50,9 @@ public class Face {
         List<Vertex> vertices = vertexIndices.stream()
                 .map(i -> zone.vertices.get(i))
                 .collect(Collectors.toList());
-        infinityVertices.add(vertices.stream().filter(v -> !Double.isFinite(v.getCoordinate(dimension1))).collect(Collectors.toSet()));
-        infinityVertices.add(vertices.stream().filter(v -> !Double.isFinite(v.getCoordinate(dimension2))).collect(Collectors.toSet()));
-        infinityVertices.add(vertices.stream().filter(v -> !Double.isFinite(v.getCoordinate(dimension3))).collect(Collectors.toSet()));
+        infinityVertices.add(vertices.stream().filter(v -> isVertexInfinite(v, dimension1)).collect(Collectors.toSet()));
+        infinityVertices.add(vertices.stream().filter(v -> isVertexInfinite(v, dimension2)).collect(Collectors.toSet()));
+        infinityVertices.add(vertices.stream().filter(v -> isVertexInfinite(v, dimension3)).collect(Collectors.toSet()));
 
         Collection<WorldPolygon> result = new ArrayList<>();
         Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
@@ -80,6 +81,14 @@ public class Face {
         }
 
         return result;
+    }
+
+    private boolean isVertexInfinite(Vertex v, Clock dimension) {
+        Optional<Constraint> scc = v.getConstraints(dimension).stream().filter(c -> c instanceof SingleClockConstraint).findFirst();
+        if (!scc.isPresent()) {
+            return false;
+        }
+        return !Double.isFinite(scc.get().getnValue());
     }
 
     public List<Vertex> getVertices() {
