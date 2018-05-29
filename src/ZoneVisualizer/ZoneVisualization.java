@@ -72,7 +72,8 @@ public class ZoneVisualization {
 
     private static void twoClocksSetup() {
         Projector projector = new Projector2D(currentClockDimensions.get(0), currentClockDimensions.get(1), maximumValue, 0.1);
-        Vector3 center = find3DContentAndCenter(projector);
+        Collection<WorldPolygon> projectedZoneFaces = projector.project(zone, Color.color(1, 0, 0, 1));
+        Vector3 center = set3DContentAndCenter(projectedZoneFaces);
         ZoneVisualizationApp.setCamera2D(center,
                 currentClockDimensions.get(0), currentClockDimensions.get(1));
     }
@@ -81,14 +82,14 @@ public class ZoneVisualization {
         ZoneVisualizationApp.setDisableRemainingClockDimensions(true);
         Projector projector = new Projector3D(currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2),
                 maximumValue, 0.1);
-        Vector3 center = find3DContentAndCenter(projector);
+        Collection<WorldPolygon> projectedZoneFaces = projector.project(zone, Color.color(1, 0, 0, 0.75));
+        Vector3 center = set3DContentAndCenter(projectedZoneFaces);
         ZoneVisualizationApp.setCamera3D(center,
                 currentClockDimensions.get(0), currentClockDimensions.get(1), currentClockDimensions.get(2));
     }
 
-    private static Vector3 find3DContentAndCenter(Projector projector) {
+    private static Vector3 set3DContentAndCenter(Collection<WorldPolygon> projectedZoneFaces) {
         //Show new visualization
-        Collection<WorldPolygon> projectedZoneFaces = projector.project(zone, Color.color(1, 0, 0, 0.75));
         Collection<WorldPolygon> sceneContent = new ArrayList<>();
         projectedZoneFaces.forEach(face -> sceneContent.add(face.getBackFace()));
         sceneContent.addAll(projectedZoneFaces);
