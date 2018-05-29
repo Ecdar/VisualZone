@@ -57,6 +57,7 @@ public class Face {
         Collection<WorldPolygon> result = new ArrayList<>();
         Vector3 vNormal = constraint.getProjectedNormal(dimension1, dimension2, dimension3);
 
+        boolean extruded = false;
         for (Collection<Vertex> infinityVerticesOfDimension : infinityVertices) {
             List<Vector3> projectedVertices = new ArrayList<>();
             projectedVertices.addAll(infinityVerticesOfDimension.stream()
@@ -66,9 +67,10 @@ public class Face {
                                 mapper.apply(v, dimension3)))
                     .distinct()
                     .collect(Collectors.toList()));
-            if (projectedVertices.size() != 2) {
+            if (projectedVertices.size() < 2) {
                 continue;
             }
+            extruded = true;
             projectedVertices.addAll(infinityVerticesOfDimension.stream()
                     .map(v ->
                             new Vector3(infinityMapper.apply(v, dimension1),
@@ -78,6 +80,30 @@ public class Face {
                     .collect(Collectors.toList()));
 
             result.add(new WorldPolygon(projectedVertices, vNormal.multiply(-1)));
+        }
+        if (!extruded && infinityVertices.size() > 1) {
+            Set<Vertex> allInfinityVertices = infinityVertices.stream()
+                    .flatMap(set -> set.stream())
+                    .collect(Collectors.toSet());
+            List<Vector3> projectedVertices = new ArrayList<>();
+            projectedVertices.addAll(allInfinityVertices.stream()
+                    .map(v ->
+                            new Vector3(mapper.apply(v, dimension1),
+                                        mapper.apply(v, dimension2),
+                                        mapper.apply(v, dimension3)))
+                    .distinct()
+                    .collect(Collectors.toList()));
+            if (projectedVertices.size() >= 2) {
+                projectedVertices.addAll(allInfinityVertices.stream()
+                        .map(v ->
+                                new Vector3(infinityMapper.apply(v, dimension1),
+                                            infinityMapper.apply(v, dimension2),
+                                            infinityMapper.apply(v, dimension3)))
+                        .distinct()
+                        .collect(Collectors.toList()));
+
+                result.add(new WorldPolygon(projectedVertices, vNormal.multiply(-1)));
+            }
         }
 
         return result;
