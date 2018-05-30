@@ -68,7 +68,7 @@ public class Vertex {
                 if (!subset.contains(scc.get())) {
                     continue;
                 }
-                Collection<TwoClockConstraint> twoClockConstraints = new ArrayList<>(LINQ.cast(subset));
+                Collection<TwoClockConstraint> twoClockConstraints =  new ArrayList<>(LINQ.ofTypeTCC(subset));
                 Collection<Clock> handledDimensions = twoClockConstraints.stream()
                         .map(tcc -> tcc.getOtherClock(pivotDimension))
                         .collect(Collectors.toList());
@@ -98,7 +98,7 @@ public class Vertex {
                 Collection<Clock> handledDimensions = adjacentTwoClockConstraints.stream()
                         .map(tcc -> tcc.getOtherClock(pivotDimension))
                         .collect(Collectors.toList());
-                Collection<Clock> missingDimensions = constraints.keySet();
+                Collection<Clock> missingDimensions = new ArrayList<>(constraints.keySet());
                 missingDimensions.remove(pivotDimension);
                 missingDimensions.removeAll(handledDimensions);
                 for (Clock missingDimension : missingDimensions) {

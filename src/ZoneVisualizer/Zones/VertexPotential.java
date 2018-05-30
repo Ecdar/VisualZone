@@ -125,7 +125,9 @@ public class VertexPotential {
             c = LINQ.first(potentialConstraints.get(dimension));
         }
         else {
-            c = LINQ.first(baseVertex.getConstraints(dimension));
+            c = LINQ.first(baseVertex.getConstraints(dimension),
+                    constraint -> constraint instanceof SingleClockConstraint ||
+                                  !((TwoClockConstraint)constraint).hasClock(keyDimension));
         }
         if (c instanceof SingleClockConstraint) {
             double value = c.getnValue();

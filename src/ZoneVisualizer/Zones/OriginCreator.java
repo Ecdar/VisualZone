@@ -145,7 +145,9 @@ public class OriginCreator {
         unresolvedCandidatesOnDimensions.remove(clock);
         candidatesOnDimensions.remove(clock);
         maxValues.remove(clock);
-        optimizableDimensions.remove(clock);
+        if (optimizableDimensions != null) {
+            optimizableDimensions.remove(clock);
+        }
     }
 
     private void resolveDimension(Clock dimension) {
