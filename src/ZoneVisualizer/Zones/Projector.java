@@ -21,7 +21,7 @@ public abstract class Projector {
         this.infinityExtrusion = infinityExtrusion;
     }
 
-    public abstract Collection<WorldPolygon> project(Zone zone, Color zoneColor);
+    public abstract Collection<WorldPolygon> project(Zone zone);
 
     protected List<Vector3> getHullVerticesOfXPlane(List<Vector3> projectedVertices) {
         Double minY = getMinFromMappedValues(projectedVertices, vertex -> vertex.y);

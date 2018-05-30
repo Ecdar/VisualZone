@@ -16,15 +16,20 @@ import java.util.stream.Collectors;
 public class Projector2D extends Projector {
     private final Clock dimension1;
     private final Clock dimension2;
+    private Color zoneColor;
+    private Color infinityColor;
 
-    public Projector2D(Clock dimension1, Clock dimension2, double maxValue, double infinityExtrusion) {
+    public Projector2D(Clock dimension1, Clock dimension2, double maxValue, double infinityExtrusion,
+                       Color zoneColor, Color infinityColor) {
         super(maxValue, infinityExtrusion);
         this.dimension1 = dimension1;
         this.dimension2 = dimension2;
+        this.zoneColor = zoneColor;
+        this.infinityColor = infinityColor;
     }
 
     @Override
-    public Collection<WorldPolygon> project(Zone zone, Color zoneColor) {
+    public Collection<WorldPolygon> project(Zone zone) {
         if (zone.getVertices().isEmpty()) {
             return new ArrayList<>();
         }
@@ -102,7 +107,7 @@ public class Projector2D extends Projector {
                 result.add(new WorldPolygon(projectedInfinity, Vector3.back()));
             }
         }
-        result.forEach(p -> p.setColor(Color.color(0, 0, 1, 1)));
+        result.forEach(p -> p.setColor(infinityColor));
 
         WorldPolygon worldPolygon = new WorldPolygon(hullVertices, Vector3.back());
         worldPolygon.setColor(zoneColor);
