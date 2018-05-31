@@ -8,8 +8,8 @@ import java.util.List;
 
 public class Task3ConstraintPanel extends ConstraintPanel {
 
-    public Task3ConstraintPanel() {
-        super();
+    public Task3ConstraintPanel(double prefWidth) {
+        super(prefWidth);
     }
 
     @Override

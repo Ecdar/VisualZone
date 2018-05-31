@@ -7,6 +7,10 @@ import java.util.List;
 
 public class CheatPanel extends ConstraintPanel {
 
+    public CheatPanel(double prefWidth) {
+        super(prefWidth);
+    }
+
     @Override
     protected List<Clock> getClocks() {
         return Arrays.asList(

@@ -26,7 +26,7 @@ public class DimensionListView extends ScrollPane {
         dimensionRoot.setPadding(new Insets(15, 0, 0, 10));
         setContent(dimensionRoot);
         dimensionUI = dimensionRoot.getChildren();
-        dimensionRoot.setPrefHeight(300);
+        dimensionRoot.setPrefHeight(250);
     }
 
     public void setClockDimensions(List<Clock> clocks) {

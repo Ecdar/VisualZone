@@ -39,7 +39,7 @@ public class Projector3D extends Projector {
         }
 
         List<Face> faces = zone.getFaces().values().stream()
-                .filter(f -> projectNormal(f).getMagnitude() > 0)
+                .filter(f -> f.getConstraint().clocksAsCollection().stream().allMatch(c -> isProjectingDimension(c)))
                 .filter(f -> Double.isFinite(f.getConstraint().getnValue()))
                 .collect(Collectors.toList());
 
@@ -58,7 +58,7 @@ public class Projector3D extends Projector {
         return projectedPolygons;
     }
 
-    private Vector3 projectNormal(Face f) {
-        return f.getConstraint().getProjectedNormal(dimension1, dimension2, dimension3);
+    private boolean isProjectingDimension(Clock dimension) {
+        return dimension == dimension1 || dimension == dimension2 || dimension == dimension3;
     }
 }

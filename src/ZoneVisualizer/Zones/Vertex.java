@@ -72,7 +72,7 @@ public class Vertex {
                 Collection<Clock> handledDimensions = twoClockConstraints.stream()
                         .map(tcc -> tcc.getOtherClock(pivotDimension))
                         .collect(Collectors.toList());
-                Collection<Clock> missingDimensions = constraints.keySet();
+                Collection<Clock> missingDimensions = new ArrayList<>(constraints.keySet());
                 missingDimensions.remove(pivotDimension);
                 missingDimensions.removeAll(handledDimensions);
                 for (Clock missingDimension : missingDimensions) {
