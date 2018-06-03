@@ -24,20 +24,20 @@ public class Task5ConstraintPanel extends ConstraintPanel {
     @Override
     protected List<Constraint> getConstraints() {
         return Arrays.asList(
-                new SingleClockConstraint(Inequality.GreaterThan, true, 6, clockDimensions.get(0)),
-                new SingleClockConstraint(Inequality.GreaterThan, true, 6, clockDimensions.get(1)),
-                new SingleClockConstraint(Inequality.GreaterThan,true, 4, clockDimensions.get(2)),
-                new SingleClockConstraint(Inequality.LessThan, true, 20, clockDimensions.get(0)),
-                new SingleClockConstraint(Inequality.LessThan, false, 22, clockDimensions.get(1)),
-                new SingleClockConstraint(Inequality.LessThan, true, 20, clockDimensions.get(2)),
+//                new SingleClockConstraint(Inequality.GreaterThan, false, 3, clockDimensions.get(0)),
+                new SingleClockConstraint(Inequality.GreaterThan, false, 5, clockDimensions.get(1)),
+                new SingleClockConstraint(Inequality.GreaterThan,false, 3, clockDimensions.get(2)),
+//                new SingleClockConstraint(Inequality.LessThan, false, 25, clockDimensions.get(0)),
+                new SingleClockConstraint(Inequality.LessThan, true, 25, clockDimensions.get(1)),
+                new SingleClockConstraint(Inequality.LessThan, true, 23, clockDimensions.get(2)),
 
-                new TwoClockConstraint(Inequality.GreaterThan, true, -4, clockDimensions.get(0), clockDimensions.get(1)),
+//                new TwoClockConstraint(Inequality.GreaterThan, false, -6, clockDimensions.get(0), clockDimensions.get(1)),
                 new TwoClockConstraint(Inequality.LessThan, true, 0,    clockDimensions.get(0), clockDimensions.get(1)),
 
                 new TwoClockConstraint(Inequality.GreaterThan, true, 0,  clockDimensions.get(0), clockDimensions.get(2)),
                 new TwoClockConstraint(Inequality.LessThan, false, 5,     clockDimensions.get(0), clockDimensions.get(2)),
 
-                new TwoClockConstraint(Inequality.GreaterThan, true, 0, clockDimensions.get(1), clockDimensions.get(2)),
+//                new TwoClockConstraint(Inequality.GreaterThan, true, 0, clockDimensions.get(1), clockDimensions.get(2)),
                 new TwoClockConstraint(Inequality.LessThan, true, 6,   clockDimensions.get(1), clockDimensions.get(2))
         );
     }
