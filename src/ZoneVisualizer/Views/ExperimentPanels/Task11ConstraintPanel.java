@@ -6,9 +6,9 @@ import ZoneVisualizer.Views.ConstraintPanel;
 import java.util.Arrays;
 import java.util.List;
 
-public class Task5ConstraintPanel extends ConstraintPanel {
+public class Task11ConstraintPanel extends ConstraintPanel {
 
-    public Task5ConstraintPanel(double prefWidth) {
+    public Task11ConstraintPanel(double prefWidth) {
         super(prefWidth);
     }
 
