@@ -27,7 +27,7 @@ public class Task1ConstraintPanel extends ConstraintPanel {
                 new SingleClockConstraint(Inequality.GreaterThan, true, 5, clockDimensions.get(0)),
                 new SingleClockConstraint(Inequality.GreaterThan, false, 2, clockDimensions.get(1)),
                 new SingleClockConstraint(Inequality.GreaterThan, false, 1, clockDimensions.get(2)),
-                new SingleClockConstraint(Inequality.LessThan, false, 22, clockDimensions.get(0)),
+//                new SingleClockConstraint(Inequality.LessThan, false, 22, clockDimensions.get(0)),
                 new SingleClockConstraint(Inequality.LessThan, false, 15, clockDimensions.get(1)),
                 new SingleClockConstraint(Inequality.LessThan, false, 13, clockDimensions.get(2)),
 
