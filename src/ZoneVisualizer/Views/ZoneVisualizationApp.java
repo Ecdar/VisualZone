@@ -4,6 +4,7 @@ import ZoneVisualizer.Constraints.Clock;
 import ZoneVisualizer.GraphicalElements.Vector3;
 import ZoneVisualizer.Views.ExperimentPanels.*;
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -33,7 +34,9 @@ public class ZoneVisualizationApp extends Application {
         dimensionListView = new DimensionListView(240);
 
         VBox leftBarParent = new VBox(5);
-        leftBarParent.getChildren().addAll(dimensionListView, new PointCreationView(240), new Task9ConstraintPanel(240));
+        ConstraintPanel constraintPanel = new Task9ConstraintPanel(240);
+        leftBarParent.getChildren().addAll(dimensionListView, new PointCreationView(240), constraintPanel);
+        leftBarParent.setMargin(constraintPanel, new Insets(100, 0, 0, 0));
 
         HBox parent = new HBox(10);
         parent.getChildren().addAll(leftBarParent, sub3DScene);
